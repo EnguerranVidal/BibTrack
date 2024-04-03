@@ -13,7 +13,7 @@ from PyQt5.QtGui import *
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
 from src.common.widgets.Widgets import AboutDialog
-from src.references.general import NewBibTrackWindow, BibEditor, BibTracker
+from src.references.general import NewBibTrackWindow, BibEditor
 
 
 ######################## CLASSES ########################
@@ -21,24 +21,15 @@ class BibTrackGui(QMainWindow):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        # self.mainIcon = QIcon('src/icons/PyStrato')
         self.hide()
-
-        # FOLDER PATHS
         self.bibTracksPath = os.path.join(self.currentDir, "bibtracks")
-
-        # MAIN SETTINGS AND STATUSBAR
         self.setGeometry(200, 200, 1000, 500)
         self.setWindowTitle('BibTrack')
-        # self.setWindowIcon(self.mainIcon)
         self.settings = loadSettings("settings")
-        # Theme Setting
         if self.settings['DARK_THEME']:
             qdarktheme.setup_theme('dark', additional_qss="QToolTip {color: black;}")
         else:
             qdarktheme.setup_theme('light')
-
-        # VARIABLES
         self.icons = {}
         self.bibEditor = None
         if self.settings['CURRENT_BIB_TRACK']:
@@ -47,14 +38,11 @@ class BibTrackGui(QMainWindow):
             self.bibEditor.tracker.saveState()
 
     def initializeUI(self):
-        # INTERFACE
         self._checkEnvironment()
         self._createIcons()
         self._createActions()
         self._createMenuBar()
         self._createToolBars()
-
-        # MENUS POPULATING
         self._populateFileMenu()
 
     def _checkEnvironment(self):
