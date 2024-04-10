@@ -69,3 +69,38 @@ class ExternalLinkTextEdit(QTextEdit):
                 super().mousePressEvent(event)
         else:
             super().mousePressEvent(event)
+
+
+class IconButton(QPushButton):
+    def __init__(self, icon: str, parent=None, size=25):
+        super(IconButton, self).__init__(parent)
+        self.iconPath = icon
+        self.setIcon(QIcon(self.iconPath))
+        self.setIconSize(QSize(size, size))
+
+
+class SquareIconButton(QPushButton):
+    def __init__(self, icon: str, parent=None, size=25, flat=False, centered=False):
+        super(SquareIconButton, self).__init__(parent)
+        self.iconPath = icon
+        self.setIcon(QIcon(self.iconPath))
+        self.setIconSize(QSize(size, size))
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        # Style Sheet
+        margin = (size - 20) // 2
+        styleSheet = 'QPushButton { text-align: center; padding: 0px; }'
+        if flat:
+            styleSheet += 'QPushButton { border: none; }'
+        if centered:
+            styleSheet += f'QPushButton {{ margin-left: {margin}px; margin-right: {margin}px; }}'
+
+        self.setStyleSheet(styleSheet)
+        self.setAutoFillBackground(False)
+
+    def setIconSize(self, size):
+        super().setIconSize(size)
+        self.setFixedSize(size)
+
+    def sizeHint(self):
+        return self.iconSize()

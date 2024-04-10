@@ -13,7 +13,7 @@ from PyQt5.QtGui import *
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
 from src.common.widgets.Widgets import AboutDialog
-from src.references.general import NewBibTrackWindow, BibEditor
+from src.references.general import NewBibTrackWindow, BibEditor, NewSourceWindow
 
 
 ######################## CLASSES ########################
@@ -34,6 +34,7 @@ class BibTrackGui(QMainWindow):
         self.bibEditor = None
         if self.settings['CURRENT_BIB_TRACK']:
             self.bibEditor = BibEditor(self.settings['CURRENT_BIB_TRACK'])
+            self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             self.setCentralWidget(self.bibEditor)
             self.bibEditor.tracker.saveState()
 
@@ -73,7 +74,7 @@ class BibTrackGui(QMainWindow):
         self.openBiblioAct = QAction('&Open Biblio', self)
         self.openBiblioAct.setStatusTip('Open Bibliography')
         self.openBiblioAct.setIcon(self.icons['OPEN_IN_BROWSER'])
-        self.openBiblioAct.setShortcut('Ctrl+N')
+        self.openBiblioAct.setShortcut('Ctrl+O')
         self.openBiblioAct.triggered.connect(self.openBiblioTrack)
         # Save Bibliography
         self.saveBiblioAct = QAction('&Save', self)
@@ -101,11 +102,74 @@ class BibTrackGui(QMainWindow):
         self.exitAct.setStatusTip('Exit application')
         self.exitAct.triggered.connect(self.close)
         ########### HELP ###########
-        # Visit GitHub Page
-        self.githubAct = QAction('&Visit GitHub', self)
-        self.githubAct.setIcon(self.icons['GITHUB'])
-        self.githubAct.setStatusTip('Visit GitHub Page')
-        self.githubAct.triggered.connect(self.openGithub)
+        # Add Article
+        self.newArticleAct = QAction('&Article', self)
+        self.newArticleAct.setStatusTip('Add New Article')
+        self.newArticleAct.triggered.connect(self.addNewArticle)
+        # Add Book
+        self.newBookAct = QAction('&Book', self)
+        self.newBookAct.setStatusTip('Add New Book')
+        self.newBookAct.triggered.connect(self.addNewBook)
+        # Add Booklet
+        self.newBookletAct = QAction('&Booklet', self)
+        self.newBookletAct.setStatusTip('Add New Booklet')
+        self.newBookletAct.triggered.connect(self.addNewBooklet)
+        # Add Conference
+        self.newConferenceAct = QAction('&Conference', self)
+        self.newConferenceAct.setStatusTip('Add New Conference')
+        self.newConferenceAct.triggered.connect(self.addNewConference)
+        # Add InBook
+        self.newInBookAct = QAction('&InBook', self)
+        self.newInBookAct.setStatusTip('Add New InBook')
+        self.newInBookAct.triggered.connect(self.addNewInBook)
+        # Add InCollection
+        self.newInCollectionAct = QAction('&Collection', self)
+        self.newInCollectionAct.setStatusTip('Add New InCollection')
+        self.newInCollectionAct.triggered.connect(self.addNewInCollection)
+        # Add InProceedings
+        self.newInProceedingsAct = QAction('&InProceedings', self)
+        self.newInProceedingsAct.setStatusTip('Add New InProceedings')
+        self.newInProceedingsAct.triggered.connect(self.addNewInProceedings)
+        # Add Manual
+        self.newManualAct = QAction('&Manual', self)
+        self.newManualAct.setStatusTip('Add New Manual')
+        self.newManualAct.triggered.connect(self.addNewManual)
+        # Add Book
+        self.newMasterThesisAct = QAction('&Masters Thesis', self)
+        self.newMasterThesisAct.setStatusTip('Add New Masters Thesis')
+        self.newMasterThesisAct.triggered.connect(self.addNewMasterThesis)
+        # Add Misc
+        self.newMiscAct = QAction('&Misc', self)
+        self.newMiscAct.setStatusTip('Add New Misc')
+        self.newMiscAct.triggered.connect(self.addNewMisc)
+        # Add Online
+        self.newOnlineAct = QAction('&Online', self)
+        self.newOnlineAct.setStatusTip('Add New Online')
+        self.newOnlineAct.triggered.connect(self.addNewOnline)
+        # Add PhD Thesis
+        self.newPhdThesisAct = QAction('&PhD Thesis', self)
+        self.newPhdThesisAct.setStatusTip('Add New PhD Thesis')
+        self.newPhdThesisAct.triggered.connect(self.addNewPhdThesis)
+        # Add Proceedings
+        self.newProceedingsAct = QAction('&Proceedings', self)
+        self.newProceedingsAct.setStatusTip('Add New Proceedings')
+        self.newProceedingsAct.triggered.connect(self.addNewProceedings)
+        # Add Standard
+        self.newStandardAct = QAction('&Standard', self)
+        self.newStandardAct.setStatusTip('Add New Standard')
+        self.newStandardAct.triggered.connect(self.addNewStandard)
+        # Add Tech Report
+        self.newTechReportAct = QAction('&Tech Report', self)
+        self.newTechReportAct.setStatusTip('Add New Tech Report')
+        self.newTechReportAct.triggered.connect(self.addNewTechReport)
+        # Add Unpublished
+        self.newUnpublishedAct = QAction('&Unpublished', self)
+        self.newUnpublishedAct.setStatusTip('Add New Unpublished')
+        self.newUnpublishedAct.triggered.connect(self.addNewUnpublished)
+        # Add Url
+        self.newUrlAct = QAction('&URL', self)
+        self.newUrlAct.setStatusTip('Add New URL')
+        self.newUrlAct.triggered.connect(self.addNewUrl)
 
         ########### HELP ###########
         # Visit GitHub Page
@@ -128,7 +192,6 @@ class BibTrackGui(QMainWindow):
         self.fileMenu.addAction(self.openBiblioAct)
         self.recentMenu = QMenu('&Recent', self)
         self.recentMenu.aboutToShow.connect(self._populateRecentMenu)
-
         self.fileMenu.addMenu(self.recentMenu)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.saveBiblioAct)
@@ -139,8 +202,33 @@ class BibTrackGui(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.exitAct)
         self.fileMenu.aboutToShow.connect(self._populateFileMenu)
+
+        ###  EDIT MENU  ###
+        self.editMenu = self.menubar.addMenu('&Edit')
+
         ###  SOURCES MENU  ###
         self.sourcesMenu = self.menubar.addMenu('&Sources')
+        self.sourcesMenu.addAction(self.newArticleAct)
+        self.sourcesMenu.addAction(self.newBookAct)
+        self.sourcesMenu.addAction(self.newConferenceAct)
+        self.sourcesMenu.addAction(self.newOnlineAct)
+        self.sourcesMenu.addAction(self.newPhdThesisAct)
+        self.otherSourcesMenu = QMenu('&Other', self)
+        self.otherSourcesMenu.addAction(self.newBookletAct)
+        self.otherSourcesMenu.addAction(self.newInBookAct)
+        self.otherSourcesMenu.addAction(self.newInCollectionAct)
+        self.otherSourcesMenu.addAction(self.newInProceedingsAct)
+        self.otherSourcesMenu.addAction(self.newManualAct)
+        self.otherSourcesMenu.addAction(self.newMasterThesisAct)
+        self.otherSourcesMenu.addAction(self.newMiscAct)
+        self.otherSourcesMenu.addAction(self.newProceedingsAct)
+        self.otherSourcesMenu.addAction(self.newStandardAct)
+        self.otherSourcesMenu.addAction(self.newTechReportAct)
+        self.otherSourcesMenu.addAction(self.newUnpublishedAct)
+        self.otherSourcesMenu.addAction(self.newUrlAct)
+        self.sourcesMenu.addSeparator()
+        self.sourcesMenu.addMenu(self.otherSourcesMenu)
+        self.otherSourcesMenu.setDisabled(True)
 
         ###  HELP MENU  ###
         self.helpMenu = self.menubar.addMenu('&Help')
@@ -203,6 +291,7 @@ class BibTrackGui(QMainWindow):
             self.bibEditor.tracker.saveState()
             self.addToRecent(newBibTrackPath)
             self.settings['CURRENT_BIB_TRACK'] = newBibTrackPath
+            self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
@@ -225,6 +314,7 @@ class BibTrackGui(QMainWindow):
             self.setCentralWidget(self.bibEditor)
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
+            self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
@@ -237,6 +327,7 @@ class BibTrackGui(QMainWindow):
             self.setCentralWidget(self.bibEditor)
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
+            self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
@@ -264,6 +355,7 @@ class BibTrackGui(QMainWindow):
             self.bibEditor.tracker.saveState(path)
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
+            self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
@@ -272,6 +364,221 @@ class BibTrackGui(QMainWindow):
 
     def exportToBibtex(self):
         pass
+
+    def addNewArticle(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Article', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'journal': '', 'year': '', 'volume': '', 'number': '', 'pages': '',
+                      'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'ARTICLE', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewBook(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Book', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'publisher': '', 'year': '', 'volume': '', 'series': '', 'address': '',
+                      'edition': '', 'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'BOOK', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewBooklet(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Booklet', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'howpublished': '', 'address': '', 'month': '', 'year': '',
+                      'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'BOOKLET', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewConference(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Conference', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'booktitle': '', 'year': '', 'editor': '', 'volume': '', 'series': '',
+                      'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
+                      'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'CONFERENCE', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewInBook(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='In Book', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'chapter': '', 'publisher': '', 'year': '', 'volume': '', 'series': '',
+                      'type': '', 'address': '', 'edition': '', 'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'INBOOK', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewInCollection(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='In Collection', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'booktitle': '', 'publisher': '', 'year': '', 'editor': '',
+                      'volume': '', 'series': '', 'type': '', 'chapter': '', 'pages': '', 'address': '', 'edition': '',
+                      'organization': '', 'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'INCOLLECTION', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewInProceedings(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='In Proceedings', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'booktitle': '', 'year': '', 'editor': '', 'volume': '', 'series': '',
+                      'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
+                      'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'INPROCEEDINGS', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewManual(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Manual', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'author': '', 'organization': '', 'address': '', 'edition': '', 'month': '',
+                      'year': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'MANUAL', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewMasterThesis(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Masters Thesis', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'address': '',
+                      'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'MASTERSTHESIS', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewMisc(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Misc Source', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'author': '', 'howpublished': '', 'month': '', 'year': '',
+                      'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'MISC', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewOnline(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Online Source', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'author': '', 'month': '', 'year': '', 'url': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'ONLINE', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewPhdThesis(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='PhD Thesis', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'month': '', 'address': '',
+                      'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'PHDTHESIS', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewProceedings(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Proceeding', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'year': '', 'editor': '', 'volume': '', 'series': '', 'address': '', 'month': '',
+                      'publisher': '', 'organization': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'PROCEEDINGS', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewStandard(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Standard', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'title': '', 'organization': '', 'institution': '', 'author': '', 'language': '',
+                      'howpublished': '', 'type': '', 'number': '', 'revision': '', 'address': '', 'year': '',
+                      'month': '', 'url': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'STANDARD', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewTechReport(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Tech Report', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'institution': '', 'year': '', 'type': '', 'number': '',
+                      'address': '', 'month': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'TECHREPORT', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewUnpublished(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='Unpublished Source', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'title': '', 'month': '', 'year': '', 'crossref': '', 'note': ''}
+            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
+
+    def addNewUrl(self):
+        sourceTagList = list(self.bibEditor.tracker.sources.keys())
+        dialog = NewSourceWindow(sourceType='URL', sourceTags=sourceTagList)
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            tag = dialog.nameLineEdit.text()
+            fields = {'author': '', 'year': '', 'series': '', 'edition': '', 'month': '', 'crossref': ''}
+            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields,
+                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            self.bibEditor.tracker.addSource(tag, source)
+            self.bibEditor.addRow(tag, source)
 
     def toggleDarkMode(self):
         self.settings['DARK_THEME'] = not self.settings['DARK_THEME']
