@@ -33,7 +33,7 @@ class BibTrackGui(QMainWindow):
         self.icons = {}
         self.bibEditor = None
         if self.settings['CURRENT_BIB_TRACK']:
-            self.bibEditor = BibEditor(self.settings['CURRENT_BIB_TRACK'])
+            self.bibEditor = BibEditor(self.currentDir, self.settings['CURRENT_BIB_TRACK'])
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             self.setCentralWidget(self.bibEditor)
             self.bibEditor.tracker.saveState()
@@ -208,11 +208,12 @@ class BibTrackGui(QMainWindow):
 
         ###  SOURCES MENU  ###
         self.sourcesMenu = self.menubar.addMenu('&Sources')
-        self.sourcesMenu.addAction(self.newArticleAct)
-        self.sourcesMenu.addAction(self.newBookAct)
-        self.sourcesMenu.addAction(self.newConferenceAct)
-        self.sourcesMenu.addAction(self.newOnlineAct)
-        self.sourcesMenu.addAction(self.newPhdThesisAct)
+        self.addSourcesMenu = QMenu('&Add Source', self)
+        self.addSourcesMenu.addAction(self.newArticleAct)
+        self.addSourcesMenu.addAction(self.newBookAct)
+        self.addSourcesMenu.addAction(self.newConferenceAct)
+        self.addSourcesMenu.addAction(self.newOnlineAct)
+        self.addSourcesMenu.addAction(self.newPhdThesisAct)
         self.otherSourcesMenu = QMenu('&Other', self)
         self.otherSourcesMenu.addAction(self.newBookletAct)
         self.otherSourcesMenu.addAction(self.newInBookAct)
@@ -226,9 +227,9 @@ class BibTrackGui(QMainWindow):
         self.otherSourcesMenu.addAction(self.newTechReportAct)
         self.otherSourcesMenu.addAction(self.newUnpublishedAct)
         self.otherSourcesMenu.addAction(self.newUrlAct)
-        self.sourcesMenu.addSeparator()
-        self.sourcesMenu.addMenu(self.otherSourcesMenu)
-        self.otherSourcesMenu.setDisabled(True)
+        self.addSourcesMenu.addSeparator()
+        self.addSourcesMenu.addMenu(self.otherSourcesMenu)
+        self.sourcesMenu.addMenu(self.addSourcesMenu)
 
         ###  HELP MENU  ###
         self.helpMenu = self.menubar.addMenu('&Help')
@@ -269,6 +270,9 @@ class BibTrackGui(QMainWindow):
             actions.append(action)
         self.recentMenu.addActions(actions)
 
+    def _populateSourcesMenu(self):
+        pass
+
     def newBiblioTrack(self):
         fullPaths = [os.path.join(self.bibTracksPath, entry) for entry in os.listdir(self.bibTracksPath)]
         bibTracks = [os.path.basename(directory) for directory in fullPaths if os.path.isdir(directory)]
@@ -286,7 +290,7 @@ class BibTrackGui(QMainWindow):
                     self._populateFileMenu()
                     return
             newBibTrackPath = os.path.join(self.bibTracksPath, name)
-            self.bibEditor = BibEditor(newBibTrackPath)
+            self.bibEditor = BibEditor(self.currentDir, newBibTrackPath)
             self.setCentralWidget(self.bibEditor)
             self.bibEditor.tracker.saveState()
             self.addToRecent(newBibTrackPath)
@@ -309,7 +313,7 @@ class BibTrackGui(QMainWindow):
                     self.bibEditor.tracker.saveState()
                 elif reply == QMessageBox.Cancel:
                     return
-            self.bibEditor = BibEditor(path)
+            self.bibEditor = BibEditor(self.currentDir, path)
             self.bibEditor.tracker.saveState()
             self.setCentralWidget(self.bibEditor)
             self.addToRecent(path)
@@ -322,7 +326,7 @@ class BibTrackGui(QMainWindow):
         filenames = [os.path.basename(path) for path in self.settings['OPENED_RECENTLY']]
         path = self.settings['OPENED_RECENTLY'][filenames.index(folderName)]
         if os.path.exists(path):
-            self.bibEditor = BibEditor(path)
+            self.bibEditor = BibEditor(self.currentDir, path)
             self.bibEditor.tracker.saveState()
             self.setCentralWidget(self.bibEditor)
             self.addToRecent(path)
@@ -373,7 +377,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'journal': '', 'year': '', 'volume': '', 'number': '', 'pages': '',
                       'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'ARTICLE', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'ARTICLE', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -385,7 +390,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'publisher': '', 'year': '', 'volume': '', 'series': '', 'address': '',
                       'edition': '', 'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'BOOK', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'BOOK', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -397,7 +403,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'howpublished': '', 'address': '', 'month': '', 'year': '',
                       'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'BOOKLET', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'BOOKLET', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -410,8 +417,8 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'booktitle': '', 'year': '', 'editor': '', 'volume': '', 'series': '',
                       'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
                       'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'CONFERENCE', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'CONFERENCE', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -423,7 +430,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'chapter': '', 'publisher': '', 'year': '', 'volume': '', 'series': '',
                       'type': '', 'address': '', 'edition': '', 'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'INBOOK', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'INBOOK', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -436,8 +444,8 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'booktitle': '', 'publisher': '', 'year': '', 'editor': '',
                       'volume': '', 'series': '', 'type': '', 'chapter': '', 'pages': '', 'address': '', 'edition': '',
                       'organization': '', 'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'INCOLLECTION', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'INCOLLECTION', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -450,8 +458,8 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'booktitle': '', 'year': '', 'editor': '', 'volume': '', 'series': '',
                       'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
                       'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'INPROCEEDINGS', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'INPROCEEDINGS', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -463,7 +471,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'organization': '', 'address': '', 'edition': '', 'month': '',
                       'year': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'MANUAL', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'MANUAL', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -475,8 +484,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'address': '',
                       'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'MASTERSTHESIS', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'MASTERSTHESIS', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -488,7 +497,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'howpublished': '', 'month': '', 'year': '',
                       'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'MISC', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'MISC', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -499,7 +509,8 @@ class BibTrackGui(QMainWindow):
         if result == QDialog.Accepted:
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'month': '', 'year': '', 'url': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'ONLINE', 'FIELDS': fields, 'DESCRIPTION': '', 'PDF': ''}
+            source = {'SELECTED': False, 'TYPE': 'ONLINE', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -511,8 +522,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'month': '', 'address': '',
                       'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'PHDTHESIS', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'PHDTHESIS', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -524,8 +535,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'year': '', 'editor': '', 'volume': '', 'series': '', 'address': '', 'month': '',
                       'publisher': '', 'organization': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'PROCEEDINGS', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'PROCEEDINGS', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -538,8 +549,8 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'organization': '', 'institution': '', 'author': '', 'language': '',
                       'howpublished': '', 'type': '', 'number': '', 'revision': '', 'address': '', 'year': '',
                       'month': '', 'url': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'STANDARD', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': ''}
+            source = {'SELECTED': False, 'TYPE': 'STANDARD', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -551,8 +562,8 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'institution': '', 'year': '', 'type': '', 'number': '',
                       'address': '', 'month': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'TECHREPORT', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'TECHREPORT', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -563,8 +574,8 @@ class BibTrackGui(QMainWindow):
         if result == QDialog.Accepted:
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'month': '', 'year': '', 'crossref': '', 'note': ''}
-            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -575,8 +586,8 @@ class BibTrackGui(QMainWindow):
         if result == QDialog.Accepted:
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'year': '', 'series': '', 'edition': '', 'month': '', 'crossref': ''}
-            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields,
-                      'DESCRIPTION': '', 'PDF': '', 'URL': ''}
+            source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields, 'DESCRIPTION': '',
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 

@@ -9,7 +9,7 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings
-from src.common.widgets.Widgets import SquareIconButton, IconButton
+from src.common.widgets.Widgets import SquareIconButton, IconButton, GeneralFieldsEditor
 
 
 ######################## CLASSES ########################
@@ -20,8 +20,13 @@ class ArticleEditor(QWidget):
         self.fields = None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.layout = QGridLayout(self)
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        self.layout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(self.layout)
 
 
 class ConferenceEditor(QWidget):

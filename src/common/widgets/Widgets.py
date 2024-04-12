@@ -1,4 +1,5 @@
 ######################## IMPORTS ########################
+import os.path
 
 # ------------------- PyQt Modules -------------------- #
 from PyQt5.QtWidgets import *
@@ -104,3 +105,92 @@ class SquareIconButton(QPushButton):
 
     def sizeHint(self):
         return self.iconSize()
+
+
+class GeneralFieldsEditor(QWidget):
+    tagChanged = pyqtSignal()
+    pdfChanged = pyqtSignal()
+    urlChanged = pyqtSignal()
+    accessTypeChanged = pyqtSignal()
+    typeChanged = pyqtSignal()
+    returnClicked = pyqtSignal()
+
+    def __init__(self, sourceTag, fields):
+        super().__init__()
+        self.settings = loadSettings('settings')
+        themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
+        self.sourceTypes = {'ARTICLE': 'Article', 'BOOK': 'Book', 'BOOKLET': 'Booklet', 'CONFERENCE': 'Conference',
+                            'INBOOK': 'InBook', 'INCOLLECTION': 'InCollection', 'INPROCEEDINGS': 'InProceedings',
+                            'MANUAL': 'Manual', 'MASTERSTHESIS': 'MastersThesis', 'MISC': 'Misc', 'ONLINE': 'Online',
+                            'PHDTHESIS': 'PhdThesis', 'PROCEEDINGS': 'Proceedings', 'STANDARD': 'Standard',
+                            'TECHREPORT': 'TechReport', 'UNPUBLISHED': 'Unpublished', 'URL': 'URL'}
+        # GO BACK BUTTON
+        self.goBackButton = QPushButton('Go Back to Source List', self)
+        self.goBackButton.clicked.connect(self.returnClicked.emit)
+        # GENERAL FIELDS
+        self.tagLineEdit = QLineEdit(sourceTag)
+        self.sourceTypeComboBox = QComboBox()
+        self.sourceTypeComboBox.addItems(list(self.sourceTypes.values()))
+        self.sourceTypeComboBox.setCurrentText(self.sourceTypes[fields['TYPE']])
+        self.accessTypeComboBox = QComboBox()
+        self.accessOptions = ['NONE', 'PDF', 'URL']
+        self.accessTypeComboBox.addItems(self.accessOptions)
+        self.accessTypeComboBox.setCurrentText(fields['ACCESS'])
+        self.accessTypeComboBox.currentIndexChanged.connect(self.changeAccessType)
+        # ACCESS STACKED WIDGET
+        self.accessStackWidget = QStackedWidget()
+        # Pdf Widget and Layout
+        pdfWidget = QWidget()
+        pdfLayout = QHBoxLayout()
+        self.pdfLineEdit = QLineEdit(fields['PDF'])
+        self.pdfLineEdit.textChanged.connect(self.pdfChanged.emit)
+        self.pdfButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-file-explorer-96.png', self)
+        self.pdfButton.clicked.connect(self.changePdfAccess)
+        pdfLayout.addWidget(self.pdfLineEdit)
+        pdfLayout.addWidget(self.pdfButton)
+        pdfWidget.setLayout(pdfLayout)
+        # Url Widget and Layout
+        urlWidget = QWidget()
+        urlLayout = QHBoxLayout()
+        self.urlLineEdit = QLineEdit(fields['URL'])
+        self.urlLineEdit.textChanged.connect(self.urlChanged.emit)
+        self.urlButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-globe-96.png', self)
+        self.urlButton.clicked.connect(self.openUrlAccess)
+        urlLayout.addWidget(self.urlLineEdit)
+        urlLayout.addWidget(self.urlButton)
+        urlWidget.setLayout(urlLayout)
+        # Adding Widgets
+        self.accessStackWidget.addWidget(QWidget())
+        self.accessStackWidget.addWidget(pdfWidget)
+        self.accessStackWidget.addWidget(urlWidget)
+        self.accessStackWidget.setCurrentIndex(self.accessOptions.index(fields['ACCESS']))
+
+        # MAIN LAYOUT
+        tagTypeLayout = QHBoxLayout()
+        tagTypeLayout.addWidget(self.tagLineEdit)
+        tagTypeLayout.addWidget(self.sourceTypeComboBox)
+        refAccessLayout = QHBoxLayout()
+        refAccessLayout.addWidget(self.accessTypeComboBox)
+        refAccessLayout.addWidget(self.accessStackWidget)
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(self.goBackButton)
+        mainLayout.addLayout(tagTypeLayout)
+        mainLayout.addLayout(refAccessLayout)
+        self.setLayout(mainLayout)
+
+    def changeAccessType(self):
+        self.accessStackWidget.setCurrentIndex(self.accessTypeComboBox.currentIndex())
+        self.accessTypeChanged.emit()
+
+    def changePdfAccess(self):
+        defaultDir = self.pdfLineEdit.text()
+        filePath, _ = QFileDialog.getOpenFileName(self, "Select PDF File", defaultDir, "PDF Files (*.pdf)")
+        if os.path.exists(filePath):
+            self.pdfLineEdit.setText(filePath)
+
+    def openUrlAccess(self):
+        if self.urlLineEdit.text():
+            import webbrowser
+            webbrowser.open(self.urlLineEdit.text())
+        else:
+            pass

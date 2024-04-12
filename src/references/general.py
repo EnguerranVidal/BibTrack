@@ -23,17 +23,18 @@ class BibEditor(QTabWidget):
 
     def __init__(self, path, bibPath):
         super(QTabWidget, self).__init__()
-        self.currentDir = path
-        self.bibPath = bibPath
+        self.currentDir, self.bibPath = path, bibPath
         self.tracker = BibTracker(self.bibPath)
         self.settings = loadSettings('settings')
         self.generators = getGeneratorList()
+        self.editors = {}
         # SOURCE TABLE
+        self.stackedWidget = QStackedWidget(self)
         self.sourcesTable = QTableWidget()
-        self.sourcesTable.setFrameStyle(QTableWidget.NoFrame)
-        # self.sourcesTable.setShowGrid(False)
-        self.sourcesTable.verticalHeader().setVisible(False)
         self.sourcesTable.setColumnCount(6)
+        self.sourcesTable.setFrameStyle(QTableWidget.NoFrame)
+        self.sourcesTable.verticalHeader().setVisible(False)
+        self.sourcesTable.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.sourcesTable.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
         self.sourcesTable.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.sourcesTable.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
@@ -42,20 +43,12 @@ class BibEditor(QTabWidget):
         self.sourcesTable.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.sourcesTable.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.sourcesTable.setHorizontalHeaderLabels(['NAME', 'TYPE', '', '', 'DESCRIPTION', ''])
+        self.stackedWidget.addWidget(self.sourcesTable)
         self.populateSourcesTable()
-        # STACKED WIDGET & EDITORS
-        self.stackedWidget = QStackedWidget(self)
-        self._generateEditors()
-
+        self.stackedWidget.setCurrentIndex(0)
         # MAIN TABS
         self.addTab(self.stackedWidget, "SOURCES")
         self.addTab(QWidget(), "COMPLETION")
-
-    def _generateEditors(self):
-        self.editors = {}
-        for index, row in self.tracker.references.iterrows():
-            self.editors[row['TYPE']] = self.generators[row['TYPE']](self.currentDir)
-            self.stackedWidget.addWidget(self.editors[row['TYPE']])
 
     def populateSourcesTable(self):
         self.sourcesTable.setRowCount(0)
@@ -64,14 +57,22 @@ class BibEditor(QTabWidget):
         self.sourcesTable.itemSelectionChanged.connect(self.change.emit)
 
     def addRow(self, sourceTag, sourceDict):
+        # Name & Type
         nameItem = QTableWidgetItem(sourceTag)
         typeItem = QTableWidgetItem(sourceDict['TYPE'])
+        # Source Editor
+        self.editors[sourceTag] = self.generators[sourceDict['TYPE']](self.currentDir)
+        self.stackedWidget.addWidget(self.editors[sourceTag])
+        # Editor Button
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
+        editButton.clicked.connect(lambda: self.sourceEdit(sourceTag))
+        # Selecting Toggle
         debugToggle = QPushButton()
         debugToggle.setCheckable(True)
         debugToggle.setChecked(sourceDict['SELECTED'])
         debugToggle.clicked.connect(self.changeSelectedState)
+        # Adding Items & Widgets to Table Row
         rowPosition = self.sourcesTable.rowCount()
         self.sourcesTable.insertRow(rowPosition)
         self.sourcesTable.setItem(rowPosition, 0, nameItem)
@@ -79,13 +80,15 @@ class BibEditor(QTabWidget):
         self.sourcesTable.setCellWidget(rowPosition, 2, editButton)
         self.sourcesTable.setCellWidget(rowPosition, 5, debugToggle)
 
-        # baseTypeComboBox = QComboBox()
-        # baseTypeComboBox.addItems(self.baseTypeNames)
-        # baseTypeComboBox.setCurrentIndex(self.baseTypesValues.index(baseType))
-        # baseTypeComboBox.currentTextChanged.connect(lambda text, row=rowPosition: self.changingType(row, text))
-        # self.sourcesTable.setCellWidget(rowPosition, 1, baseTypeComboBox)
-        # descriptionItem = QTableWidgetItem(description)
-        # self.sourcesTable.setItem(rowPosition, 2, descriptionItem)
+    def sourceEdit(self, sourceTag):
+        sourceEditor = self.editors[sourceTag]
+        if not sourceEditor.generated:
+            sourceEditor.initialize(sourceTag, self.tracker.sources[sourceTag])
+            sourceEditor.generalFieldsEditor.returnClicked.connect(self.goBackToSources)
+        self.stackedWidget.setCurrentWidget(sourceEditor)
+
+    def goBackToSources(self):
+        self.stackedWidget.setCurrentIndex(0)
 
     def changeSelectedState(self):
         senderWidget: QPushButton = self.sender()
