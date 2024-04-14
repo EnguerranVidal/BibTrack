@@ -17,71 +17,102 @@ class ArticleEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
     def initialize(self, sourceTag, fields):
         self.sourceTag, self.fields = sourceTag, fields
         self.generated = True
-        self.layout = QGridLayout(self)
         self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        self.layout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(self.layout)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 class ConferenceEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 class InProceedingsEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 class MastersThesisEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 class ProceedingsEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 class PhdThesisEditor(QWidget):
     def __init__(self, path):
         super().__init__()
         self.currentDir = path
-        self.fields = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
         self.generated = False
 
-    def initialize(self, fields):
-        self.fields = fields
+    def initialize(self, sourceTag, fields):
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        self.setLayout(mainLayout)
 
 
 ######################## FUNCTIONS ########################

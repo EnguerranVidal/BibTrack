@@ -109,15 +109,14 @@ class SquareIconButton(QPushButton):
 
 class GeneralFieldsEditor(QWidget):
     tagChanged = pyqtSignal()
-    pdfChanged = pyqtSignal()
-    urlChanged = pyqtSignal()
-    accessTypeChanged = pyqtSignal()
     typeChanged = pyqtSignal()
+    fieldsChanged = pyqtSignal()
     returnClicked = pyqtSignal()
 
     def __init__(self, sourceTag, fields):
         super().__init__()
         self.settings = loadSettings('settings')
+        self.sourceTag, self.fields = sourceTag, fields
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         self.sourceTypes = {'ARTICLE': 'Article', 'BOOK': 'Book', 'BOOKLET': 'Booklet', 'CONFERENCE': 'Conference',
                             'INBOOK': 'InBook', 'INCOLLECTION': 'InCollection', 'INPROCEEDINGS': 'InProceedings',
@@ -128,32 +127,32 @@ class GeneralFieldsEditor(QWidget):
         self.goBackButton = QPushButton('Go Back to Source List', self)
         self.goBackButton.clicked.connect(self.returnClicked.emit)
         # GENERAL FIELDS
-        self.tagLineEdit = QLineEdit(sourceTag)
+        self.tagLineEdit = QLineEdit(self.sourceTag)
         self.sourceTypeComboBox = QComboBox()
         self.sourceTypeComboBox.addItems(list(self.sourceTypes.values()))
-        self.sourceTypeComboBox.setCurrentText(self.sourceTypes[fields['TYPE']])
+        self.sourceTypeComboBox.setCurrentText(self.sourceTypes[self.fields['TYPE']])
+        self.sourceTypeComboBox.setDisabled(True)   # TODO : Remove when type change works
+        # ACCESS STACKED WIDGET & COMBOBOX
         self.accessTypeComboBox = QComboBox()
         self.accessOptions = ['NONE', 'PDF', 'URL']
         self.accessTypeComboBox.addItems(self.accessOptions)
-        self.accessTypeComboBox.setCurrentText(fields['ACCESS'])
-        self.accessTypeComboBox.currentIndexChanged.connect(self.changeAccessType)
-        # ACCESS STACKED WIDGET
+        self.accessTypeComboBox.setCurrentText(self.fields['ACCESS'])
+        self.accessTypeComboBox.currentIndexChanged.connect(self._changeAccessType)
         self.accessStackWidget = QStackedWidget()
         # Pdf Widget and Layout
         pdfWidget = QWidget()
         pdfLayout = QHBoxLayout()
-        self.pdfLineEdit = QLineEdit(fields['PDF'])
-        self.pdfLineEdit.textChanged.connect(self.pdfChanged.emit)
+        self.pdfLineEdit = QLineEdit(self.fields['PDF'])
         self.pdfButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-file-explorer-96.png', self)
-        self.pdfButton.clicked.connect(self.changePdfAccess)
+        self.pdfButton.clicked.connect(self._changePdfAccess)
         pdfLayout.addWidget(self.pdfLineEdit)
         pdfLayout.addWidget(self.pdfButton)
         pdfWidget.setLayout(pdfLayout)
         # Url Widget and Layout
         urlWidget = QWidget()
         urlLayout = QHBoxLayout()
-        self.urlLineEdit = QLineEdit(fields['URL'])
-        self.urlLineEdit.textChanged.connect(self.urlChanged.emit)
+        self.urlLineEdit = QLineEdit(self.fields['URL'])
+        self.urlLineEdit.textChanged.connect(self._changeUrlAccess)
         self.urlButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-globe-96.png', self)
         self.urlButton.clicked.connect(self.openUrlAccess)
         urlLayout.addWidget(self.urlLineEdit)
@@ -163,7 +162,14 @@ class GeneralFieldsEditor(QWidget):
         self.accessStackWidget.addWidget(QWidget())
         self.accessStackWidget.addWidget(pdfWidget)
         self.accessStackWidget.addWidget(urlWidget)
-        self.accessStackWidget.setCurrentIndex(self.accessOptions.index(fields['ACCESS']))
+        self.accessStackWidget.setCurrentIndex(self.accessOptions.index(self.fields['ACCESS']))
+        # KEYWORDS WIDGET
+        self.keywordsWidget = TagWidget()
+        self.keywordsWidget.populateTags(self.fields['KEYWORDS'])
+        self.keywordsWidget.tagChange.connect(self.fieldsChanged.emit)
+        # DESCRIPTION EDIT
+        self.descriptionEdit = QLineEdit(self.fields['DESCRIPTION'])
+        self.descriptionEdit.textChanged.connect(self._changeDescription)
 
         # MAIN LAYOUT
         tagTypeLayout = QHBoxLayout()
@@ -176,17 +182,34 @@ class GeneralFieldsEditor(QWidget):
         mainLayout.addWidget(self.goBackButton)
         mainLayout.addLayout(tagTypeLayout)
         mainLayout.addLayout(refAccessLayout)
+        mainLayout.addWidget(self.keywordsWidget)
+        mainLayout.addWidget(self.descriptionEdit)
         self.setLayout(mainLayout)
 
-    def changeAccessType(self):
+    def _changeAccessType(self):
         self.accessStackWidget.setCurrentIndex(self.accessTypeComboBox.currentIndex())
-        self.accessTypeChanged.emit()
+        self.fields['ACCESS'] = self.accessTypeComboBox.currentText()
+        self.fieldsChanged.emit()
 
-    def changePdfAccess(self):
+    def _changePdfAccess(self):
         defaultDir = self.pdfLineEdit.text()
         filePath, _ = QFileDialog.getOpenFileName(self, "Select PDF File", defaultDir, "PDF Files (*.pdf)")
         if os.path.exists(filePath):
             self.pdfLineEdit.setText(filePath)
+            self.fields['PDF'] = filePath
+            self.fieldsChanged.emit()
+
+    def _changeUrlAccess(self):
+        self.fields['URL'] = self.urlLineEdit.text()
+        self.fieldsChanged.emit()
+
+    def _changeKeywords(self):
+        self.fields['KEYWORDS'] = self.keywordsWidget.tagTexts
+        self.fieldsChanged.emit()
+
+    def _changeDescription(self):
+        self.fields['DESCRIPTION'] = self.descriptionEdit.text()
+        self.fieldsChanged.emit()
 
     def openUrlAccess(self):
         if self.urlLineEdit.text():
@@ -194,3 +217,116 @@ class GeneralFieldsEditor(QWidget):
             webbrowser.open(self.urlLineEdit.text())
         else:
             pass
+
+
+class TagWidget(QWidget):
+    tagChange = pyqtSignal()
+
+    def __init__(self):
+        super(TagWidget, self).__init__()
+        self.tagTexts, self.tagWidgets = [], []
+        # TAGS INPUT LINE EDIT
+        self.inputLineEdit = QLineEdit()
+        self.inputLineEdit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
+        self.inputLineEdit.returnPressed.connect(self.inputTags)
+        # LISTING WIDGET
+        self.listingWidget = ResizableListingWidget()
+
+        mainLayout = QVBoxLayout()
+        mainLayout.setSpacing(4)
+        mainLayout.addWidget(self.inputLineEdit)
+        mainLayout.addWidget(self.listingWidget)
+        self.setLayout(mainLayout)
+        self.show()
+
+    def inputTags(self):
+        newTags = self.inputLineEdit.text().split(', ')
+        self.inputLineEdit.clear()
+        for tagText in newTags:
+            if tagText and tagText not in self.tagTexts:
+                self.addTag(tagText)
+        self.tagChange.emit()
+
+    def populateTags(self, tagList):
+        for tag in tagList:
+            self.addTag(tag)
+
+    def addTag(self, text):
+        newTag = QFrame()
+        newTag.setStyleSheet('border:1px solid rgb(192, 192, 192); border-radius: 4px;')
+        newTag.setContentsMargins(2, 2, 2, 2)
+        newTag.setFixedHeight(28)
+        tagLayout = QHBoxLayout()
+        tagLayout.setContentsMargins(4, 4, 4, 4)
+        tagLayout.setSpacing(10)
+
+        tagLabel = QLabel(text)
+        tagLabel.setStyleSheet('border:0px')
+        tagLabel.setFixedHeight(16)
+        # tagLabelWidth = tagLabel.fontMetrics().boundingRect(text).width() + 20
+        # tagLabel.setFixedWidth(tagLabelWidth)
+
+        deleteButton = QPushButton('x')
+        deleteButton.setFixedSize(20, 20)
+        deleteButton.setStyleSheet('border:0px; font-weight:bold')
+        deleteButton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        deleteButton.clicked.connect(lambda _, name=text: self.deleteTag(name))
+        tagLayout.addWidget(tagLabel)
+        tagLayout.addWidget(deleteButton)
+        newTag.setLayout(tagLayout)
+        newTag.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+
+        # ADDING TAG TO TAGS & LISTING WIDGET
+        self.tagTexts.append(text)
+        self.listingWidget.addWidget(newTag)
+        self.tagWidgets.append(newTag)
+
+    def deleteTag(self, tagText):
+        for tagWidget in self.tagWidgets:
+            label = tagWidget.findChild(QLabel)
+            if label.text() == tagText:
+                self.tagTexts.remove(tagText)
+                self.listingWidget.removeWidget(tagWidget)
+                tagWidget.deleteLater()
+                self.tagWidgets.remove(tagWidget)
+                self.tagChange.emit()
+
+
+class ResizableListingWidget(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.rows = 0
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        self.widgets = []
+        self.adjustWidgets()
+
+    def resizeEvent(self, event):
+        self.adjustWidgets()
+
+    def adjustWidgets(self):
+        currentX, currentY = 0, 0
+        maxHeight = 0
+        self.rows = 0
+        for widget in self.widgets:
+            widgetWidth = widget.width()
+            widgetHeight = widget.height()
+            if currentX + widgetWidth > self.width():
+                currentY += maxHeight
+                currentX = 0
+                maxHeight = 0
+                self.rows = 1
+            widget.move(currentX, currentY)
+            currentX += widgetWidth
+            maxHeight = max(maxHeight, widgetHeight)
+
+    def addWidget(self, widget):
+        # widget.setFixedWidth(widget.width())
+        self.widgets.append(widget)
+        self.layout.addWidget(widget)
+        self.adjustWidgets()
+
+    def removeWidget(self, widget):
+        self.layout.removeWidget(widget)
+        self.widgets.remove(widget)
+        self.adjustWidgets()

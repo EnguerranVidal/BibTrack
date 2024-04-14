@@ -378,7 +378,7 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'journal': '', 'year': '', 'volume': '', 'number': '', 'pages': '',
                       'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'ARTICLE', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -391,7 +391,7 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'publisher': '', 'year': '', 'volume': '', 'series': '', 'address': '',
                       'edition': '', 'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'BOOK', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -404,7 +404,7 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'howpublished': '', 'address': '', 'month': '', 'year': '',
                       'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'BOOKLET', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -418,7 +418,7 @@ class BibTrackGui(QMainWindow):
                       'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
                       'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'CONFERENCE', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -431,7 +431,7 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'chapter': '', 'publisher': '', 'year': '', 'volume': '', 'series': '',
                       'type': '', 'address': '', 'edition': '', 'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'INBOOK', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -445,7 +445,7 @@ class BibTrackGui(QMainWindow):
                       'volume': '', 'series': '', 'type': '', 'chapter': '', 'pages': '', 'address': '', 'edition': '',
                       'organization': '', 'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'INCOLLECTION', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -459,7 +459,7 @@ class BibTrackGui(QMainWindow):
                       'pages': '', 'address': '', 'month': '', 'organization': '', 'publisher': '',
                       'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'INPROCEEDINGS', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -472,7 +472,7 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'author': '', 'organization': '', 'address': '', 'edition': '', 'month': '',
                       'year': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'MANUAL', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -485,7 +485,7 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'address': '',
                       'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'MASTERSTHESIS', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -498,7 +498,7 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'author': '', 'howpublished': '', 'month': '', 'year': '',
                       'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'MISC', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -510,7 +510,7 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'title': '', 'author': '', 'month': '', 'year': '', 'url': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'ONLINE', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -523,7 +523,7 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'author': '', 'school': '', 'year': '', 'type': '', 'month': '', 'address': '',
                       'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'PHDTHESIS', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -536,7 +536,7 @@ class BibTrackGui(QMainWindow):
             fields = {'title': '', 'year': '', 'editor': '', 'volume': '', 'series': '', 'address': '', 'month': '',
                       'publisher': '', 'organization': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'PROCEEDINGS', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -550,7 +550,7 @@ class BibTrackGui(QMainWindow):
                       'howpublished': '', 'type': '', 'number': '', 'revision': '', 'address': '', 'year': '',
                       'month': '', 'url': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'STANDARD', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -563,7 +563,7 @@ class BibTrackGui(QMainWindow):
             fields = {'author': '', 'title': '', 'institution': '', 'year': '', 'type': '', 'number': '',
                       'address': '', 'month': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'TECHREPORT', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -575,7 +575,7 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'title': '', 'month': '', 'year': '', 'crossref': '', 'note': ''}
             source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
@@ -587,7 +587,7 @@ class BibTrackGui(QMainWindow):
             tag = dialog.nameLineEdit.text()
             fields = {'author': '', 'year': '', 'series': '', 'edition': '', 'month': '', 'crossref': ''}
             source = {'SELECTED': False, 'TYPE': 'UNPUBLISHED', 'FIELDS': fields, 'DESCRIPTION': '',
-                      'PDF': '', 'URL': '', 'ACCESS': 'NONE'}
+                      'PDF': '', 'URL': '', 'ACCESS': 'NONE', 'KEYWORDS': []}
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
