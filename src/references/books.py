@@ -14,85 +14,41 @@ from src.common.widgets.Widgets import SquareIconButton, IconButton, GeneralFiel
 
 ######################## CLASSES ########################
 class BookEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class BookletEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class InBookEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class InCollectionEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 ######################## FUNCTIONS ########################
-def createBookEditor(path):
-    return BookEditor(path)
+def createBookEditor(path, sourceTag, fields):
+    return BookEditor(path, sourceTag, fields)
 
 
-def createBookletEditor(path):
-    return BookletEditor(path)
+def createBookletEditor(path, sourceTag, fields):
+    return BookletEditor(path, sourceTag, fields)
 
 
-def createInBookEditor(path):
-    return InBookEditor(path)
+def createInBookEditor(path, sourceTag, fields):
+    return InBookEditor(path, sourceTag, fields)
 
 
-def createInCollectionEditor(path):
-    return InCollectionEditor(path)
+def createInCollectionEditor(path, sourceTag, fields):
+    return InCollectionEditor(path, sourceTag, fields)

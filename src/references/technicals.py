@@ -14,64 +14,31 @@ from src.common.widgets.Widgets import SquareIconButton, IconButton, GeneralFiel
 
 ######################## CLASSES ########################
 class ManualEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class StandardEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class TechReportEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 ######################## FUNCTIONS ########################
-def createManualEditor(path):
-    return ManualEditor(path)
+def createManualEditor(path, sourceTag, fields):
+    return ManualEditor(path, sourceTag, fields)
 
 
-def createStandardEditor(path):
-    return StandardEditor(path)
+def createStandardEditor(path, sourceTag, fields):
+    return StandardEditor(path, sourceTag, fields)
 
 
-def createTechReportEditor(path):
-    return TechReportEditor(path)
+def createTechReportEditor(path, sourceTag, fields):
+    return TechReportEditor(path, sourceTag, fields)

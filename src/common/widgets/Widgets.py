@@ -111,10 +111,10 @@ class GeneralFieldsEditor(QWidget):
     tagChanged = pyqtSignal()
     typeChanged = pyqtSignal()
     fieldsChanged = pyqtSignal()
-    returnClicked = pyqtSignal()
 
-    def __init__(self, sourceTag, fields):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
+        self.currentDir = path
         self.settings = loadSettings('settings')
         self.sourceTag, self.fields = sourceTag, fields
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
@@ -123,26 +123,34 @@ class GeneralFieldsEditor(QWidget):
                             'MANUAL': 'Manual', 'MASTERSTHESIS': 'MastersThesis', 'MISC': 'Misc', 'ONLINE': 'Online',
                             'PHDTHESIS': 'PhdThesis', 'PROCEEDINGS': 'Proceedings', 'STANDARD': 'Standard',
                             'TECHREPORT': 'TechReport', 'UNPUBLISHED': 'Unpublished', 'URL': 'URL'}
-        # GO BACK BUTTON
-        self.goBackButton = QPushButton('Go Back to Source List', self)
-        self.goBackButton.clicked.connect(self.returnClicked.emit)
-        # GENERAL FIELDS
+        # GENERAL FIELDS & LABELS
         self.tagLineEdit = QLineEdit(self.sourceTag)
+        self.tagLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.sourceTypeComboBox = QComboBox()
         self.sourceTypeComboBox.addItems(list(self.sourceTypes.values()))
         self.sourceTypeComboBox.setCurrentText(self.sourceTypes[self.fields['TYPE']])
         self.sourceTypeComboBox.setDisabled(True)   # TODO : Remove when type change works
+        self.sourceTypeComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        tagLabel, typeLabel, accessLabel, descriptionLabel = QLabel("Tag:"), QLabel("Type:"), QLabel("Access:"), QLabel("Description:")
+        tagLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        typeLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        accessLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        descriptionLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # ACCESS STACKED WIDGET & COMBOBOX
         self.accessTypeComboBox = QComboBox()
         self.accessOptions = ['NONE', 'PDF', 'URL']
         self.accessTypeComboBox.addItems(self.accessOptions)
         self.accessTypeComboBox.setCurrentText(self.fields['ACCESS'])
         self.accessTypeComboBox.currentIndexChanged.connect(self._changeAccessType)
+        self.accessTypeComboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.accessStackWidget = QStackedWidget()
+        self.accessStackWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
         # Pdf Widget and Layout
         pdfWidget = QWidget()
         pdfLayout = QHBoxLayout()
         self.pdfLineEdit = QLineEdit(self.fields['PDF'])
+        self.pdfLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.pdfButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-file-explorer-96.png', self)
         self.pdfButton.clicked.connect(self._changePdfAccess)
         pdfLayout.addWidget(self.pdfLineEdit)
@@ -152,6 +160,7 @@ class GeneralFieldsEditor(QWidget):
         urlWidget = QWidget()
         urlLayout = QHBoxLayout()
         self.urlLineEdit = QLineEdit(self.fields['URL'])
+        self.urlLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.urlLineEdit.textChanged.connect(self._changeUrlAccess)
         self.urlButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-globe-96.png', self)
         self.urlButton.clicked.connect(self.openUrlAccess)
@@ -164,26 +173,25 @@ class GeneralFieldsEditor(QWidget):
         self.accessStackWidget.addWidget(urlWidget)
         self.accessStackWidget.setCurrentIndex(self.accessOptions.index(self.fields['ACCESS']))
         # KEYWORDS WIDGET
-        self.keywordsWidget = TagWidget()
-        self.keywordsWidget.populateTags(self.fields['KEYWORDS'])
-        self.keywordsWidget.tagChange.connect(self.fieldsChanged.emit)
+        # self.keywordsWidget = TagWidget('Keywords :')
+        # self.keywordsWidget.populateTags(self.fields['KEYWORDS'])
+        # self.keywordsWidget.tagChange.connect(self.fieldsChanged.emit)
         # DESCRIPTION EDIT
         self.descriptionEdit = QLineEdit(self.fields['DESCRIPTION'])
         self.descriptionEdit.textChanged.connect(self._changeDescription)
+        self.descriptionEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # MAIN LAYOUT
-        tagTypeLayout = QHBoxLayout()
-        tagTypeLayout.addWidget(self.tagLineEdit)
-        tagTypeLayout.addWidget(self.sourceTypeComboBox)
-        refAccessLayout = QHBoxLayout()
-        refAccessLayout.addWidget(self.accessTypeComboBox)
-        refAccessLayout.addWidget(self.accessStackWidget)
-        mainLayout = QVBoxLayout()
-        mainLayout.addWidget(self.goBackButton)
-        mainLayout.addLayout(tagTypeLayout)
-        mainLayout.addLayout(refAccessLayout)
-        mainLayout.addWidget(self.keywordsWidget)
-        mainLayout.addWidget(self.descriptionEdit)
+        mainLayout = QGridLayout()
+        mainLayout.addWidget(tagLabel, 0, 0)
+        mainLayout.addWidget(self.tagLineEdit, 0, 1, 1, 2)
+        mainLayout.addWidget(typeLabel, 1, 0)
+        mainLayout.addWidget(self.sourceTypeComboBox, 1, 1)
+        mainLayout.addWidget(accessLabel, 2, 0)
+        mainLayout.addWidget(self.accessTypeComboBox, 2, 1)
+        mainLayout.addWidget(self.accessStackWidget, 2, 2)  # Access stack widget spans two columns
+        mainLayout.addWidget(descriptionLabel, 3, 0)
+        mainLayout.addWidget(self.descriptionEdit, 4, 0, 1, 3)
         self.setLayout(mainLayout)
 
     def _changeAccessType(self):
@@ -222,19 +230,24 @@ class GeneralFieldsEditor(QWidget):
 class TagWidget(QWidget):
     tagChange = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, title):
         super(TagWidget, self).__init__()
         self.tagTexts, self.tagWidgets = [], []
         # TAGS INPUT LINE EDIT
+        self.titleLabel = QLabel(title)
         self.inputLineEdit = QLineEdit()
         self.inputLineEdit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
         self.inputLineEdit.returnPressed.connect(self.inputTags)
         # LISTING WIDGET
         self.listingWidget = ResizableListingWidget()
 
+        # MAIN LAYOUT
+        upperLayout = QHBoxLayout()
+        upperLayout.addWidget(self.titleLabel)
+        upperLayout.addWidget(self.inputLineEdit)
         mainLayout = QVBoxLayout()
         mainLayout.setSpacing(4)
-        mainLayout.addWidget(self.inputLineEdit)
+        mainLayout.addLayout(upperLayout)
         mainLayout.addWidget(self.listingWidget)
         self.setLayout(mainLayout)
         self.show()
@@ -295,9 +308,10 @@ class TagWidget(QWidget):
 class ResizableListingWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.rows = 0
+        self.rows = 1
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
+        self.layout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
         self.widgets = []
         self.adjustWidgets()
 
@@ -307,7 +321,7 @@ class ResizableListingWidget(QWidget):
     def adjustWidgets(self):
         currentX, currentY = 0, 0
         maxHeight = 0
-        self.rows = 0
+        self.rows = 1
         for widget in self.widgets:
             widgetWidth = widget.width()
             widgetHeight = widget.height()
@@ -315,18 +329,33 @@ class ResizableListingWidget(QWidget):
                 currentY += maxHeight
                 currentX = 0
                 maxHeight = 0
-                self.rows = 1
+                self.rows += 1
             widget.move(currentX, currentY)
             currentX += widgetWidth
             maxHeight = max(maxHeight, widgetHeight)
+        self.adjustSize()
 
     def addWidget(self, widget):
-        # widget.setFixedWidth(widget.width())
         self.widgets.append(widget)
         self.layout.addWidget(widget)
         self.adjustWidgets()
 
     def removeWidget(self, widget):
-        self.layout.removeWidget(widget)
+        # self.layout.removeWidget(widget)
         self.widgets.remove(widget)
         self.adjustWidgets()
+
+
+class MonthComboBox(QComboBox):
+    def __init__(self, inputMonth: str):
+        super().__init__()
+        self.months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        self.addItems(self.months)
+        inMonths = [month.lower() for month in self.months]
+        abbreviations = [month[:3].lower() for month in self.months]
+        if inputMonth.lower() in inMonths:
+            self.setCurrentText(self.months[inMonths.index(inputMonth.lower())])
+        elif inputMonth.lower() in abbreviations:
+            self.setCurrentText(self.months[abbreviations.index(inputMonth.lower())])
+        else:
+            self.setCurrentText('')

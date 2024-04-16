@@ -26,7 +26,6 @@ class BibEditor(QTabWidget):
         self.currentDir, self.bibPath = path, bibPath
         self.tracker = BibTracker(self.bibPath)
         self.settings = loadSettings('settings')
-        self.generators = getGeneratorList()
         self.editors = {}
         # SOURCE TABLE
         self.stackedWidget = QStackedWidget(self)
@@ -61,7 +60,7 @@ class BibEditor(QTabWidget):
         nameItem = QTableWidgetItem(sourceTag)
         typeItem = QTableWidgetItem(sourceDict['TYPE'])
         # Source Editor
-        self.editors[sourceTag] = self.generators[sourceDict['TYPE']](self.currentDir)
+        self.editors[sourceTag] = SourceEditor(self.currentDir)
         self.stackedWidget.addWidget(self.editors[sourceTag])
         # Editor Button
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
@@ -84,7 +83,7 @@ class BibEditor(QTabWidget):
         sourceEditor = self.editors[sourceTag]
         if not sourceEditor.generated:
             sourceEditor.initialize(sourceTag, self.tracker.sources[sourceTag])
-            sourceEditor.generalFieldsEditor.returnClicked.connect(self.goBackToSources)
+            sourceEditor.returnClicked.connect(self.goBackToSources)
         self.stackedWidget.setCurrentWidget(sourceEditor)
 
     def goBackToSources(self):
@@ -96,6 +95,33 @@ class BibEditor(QTabWidget):
         tags = list(self.tracker.sources.keys())
         self.tracker.sources[tags[row]]['SELECTED'] = senderWidget.isChecked()
         self.change.emit()
+
+
+class SourceEditor(QWidget):
+    returnClicked = pyqtSignal()
+
+    def __init__(self, path):
+        super().__init__()
+        self.currentDir = path
+        self.generators = getGeneratorList()
+        self.typeFieldsEditor = None
+        self.goBackButton = None
+        self.generalFieldsEditor = None
+        self.sourceTag, self.fields = None, None
+        self.generated = False
+
+    def initialize(self, sourceTag, fields):
+        self.goBackButton = QPushButton('Go Back to Source List', self)
+        self.goBackButton.clicked.connect(self.returnClicked.emit)
+        self.sourceTag, self.fields = sourceTag, fields
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, sourceTag, fields)
+        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields)
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.goBackButton, 0, 0, 1, 2)
+        mainLayout.addWidget(self.generalFieldsEditor, 1, 0)
+        mainLayout.addWidget(self.typeFieldsEditor, 1, 1)
+        self.setLayout(mainLayout)
 
 
 class NewBibTrackWindow(QDialog):

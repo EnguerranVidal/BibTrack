@@ -9,135 +9,76 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings
-from src.common.widgets.Widgets import SquareIconButton, IconButton, GeneralFieldsEditor
+from src.common.widgets.Widgets import MonthComboBox
 
 
 ######################## CLASSES ########################
 class ArticleEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
+        self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
 
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
+        mainLayout = QGridLayout()
+        mainLayout.addWidget(self.monthComboBox, 0, 0)
         self.setLayout(mainLayout)
 
 
 class ConferenceEditor(QWidget):
-    def __init__(self, path):
+    returnClicked = pyqtSignal()
+
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class InProceedingsEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class MastersThesisEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class ProceedingsEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 class PhdThesisEditor(QWidget):
-    def __init__(self, path):
+    def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.sourceTag, self.fields = sourceTag, fields
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(sourceTag, fields)
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.generalFieldsEditor, 0, 0)
-        self.setLayout(mainLayout)
 
 
 ######################## FUNCTIONS ########################
-def createArticleEditor(path):
-    return ArticleEditor(path)
+def createArticleEditor(path, sourceTag, fields):
+    return ArticleEditor(path, sourceTag, fields)
 
 
-def createConferenceEditor(path):
-    return ConferenceEditor(path)
+def createConferenceEditor(path, sourceTag, fields):
+    return ConferenceEditor(path, sourceTag, fields)
 
 
-def createInProceedingsEditor(path):
-    return InProceedingsEditor(path)
+def createInProceedingsEditor(path, sourceTag, fields):
+    return InProceedingsEditor(path, sourceTag, fields)
 
 
-def createMastersThesisEditor(path):
-    return MastersThesisEditor(path)
+def createMastersThesisEditor(path, sourceTag, fields):
+    return MastersThesisEditor(path, sourceTag, fields)
 
 
-def createPhdThesisEditor(path):
-    return PhdThesisEditor(path)
+def createPhdThesisEditor(path, sourceTag, fields):
+    return PhdThesisEditor(path, sourceTag, fields)
 
 
-def createProceedingsEditor(path):
-    return ProceedingsEditor(path)
+def createProceedingsEditor(path, sourceTag, fields):
+    return ProceedingsEditor(path, sourceTag, fields)
 
 
 
