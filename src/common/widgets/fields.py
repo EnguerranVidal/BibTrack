@@ -146,3 +146,18 @@ class MonthComboBox(QComboBox):
             self.setCurrentText(self.months[abbreviations.index(inputMonth.lower())])
         else:
             self.setCurrentText('')
+
+
+class EditionComboBox(QComboBox):
+    def __init__(self, inputEdition: str):
+        super().__init__()
+        self.editions = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eight', 'Ninth', 'Tenth']
+        self.addItems(self.editions)
+        inEditions = [edition.lower() for edition in self.editions]
+        abbreviations = [edition[:3].lower() for edition in self.editions]
+        if inputEdition.lower() in inEditions:
+            self.setCurrentText(self.editions[inEditions.index(inputEdition.lower())])
+        elif inputEdition.lower() in abbreviations:
+            self.setCurrentText(self.editions[abbreviations.index(inputEdition.lower())])
+        else:
+            self.setCurrentText('')
