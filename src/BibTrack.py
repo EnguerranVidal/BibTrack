@@ -12,7 +12,7 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
-from src.common.widgets.Widgets import AboutDialog
+from src.common.widgets.widgets import AboutDialog
 from src.references.general import NewBibTrackWindow, BibEditor, NewSourceWindow
 
 

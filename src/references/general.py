@@ -9,7 +9,8 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings
-from src.common.widgets.Widgets import SquareIconButton, IconButton
+from src.common.widgets.fields import GeneralFieldsEditor
+from src.common.widgets.widgets import SquareIconButton, IconButton
 # References
 from src.references.academics import *
 from src.references.books import *
