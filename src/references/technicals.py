@@ -22,15 +22,15 @@ class ManualEditor(QWidget):
         self.currentDir = path
         self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
-        self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
-        self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
-        self.organizationLineEdit = QLineEdit(fields['FIELDS']['organization'])
-        self.addressLineEdit = QLineEdit(fields['FIELDS']['address'])
-        self.editionLineEdit = QLineEdit(fields['FIELDS']['edition'])
-        self.yearLineEdit = QLineEdit(fields['FIELDS']['year'])
-        self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
-        self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
-        self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
+        self.titleLineEdit = QLineEdit(fields['title'])
+        self.authorLineEdit = QLineEdit(fields['author'])
+        self.organizationLineEdit = QLineEdit(fields['organization'])
+        self.addressLineEdit = QLineEdit(fields['address'])
+        self.editionLineEdit = QLineEdit(fields['edition'])
+        self.yearLineEdit = QLineEdit(fields['year'])
+        self.crossrefLineEdit = QLineEdit(fields['crossref'])
+        self.noteLineEdit = QLineEdit(fields['note'])
+        self.monthComboBox = MonthComboBox(fields['month'])
         # FIELD CHANGES CONNECTS
         self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
         self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
@@ -64,7 +64,7 @@ class ManualEditor(QWidget):
         self.setLayout(mainLayout)
 
     def userFieldChange(self, text, field):
-        self.fields['FIELDS'][field] = text
+        self.fields[field] = text
         self.fieldChanged.emit()
 
 
@@ -76,21 +76,21 @@ class StandardEditor(QWidget):
         self.currentDir = path
         self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
-        self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
-        self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
-        self.organizationLineEdit = QLineEdit(fields['FIELDS']['organization'])
-        self.institutionLineEdit = QLineEdit(fields['FIELDS']['institution'])
-        self.languageLineEdit = QLineEdit(fields['FIELDS']['language'])
-        self.howPublishedLineEdit = QLineEdit(fields['FIELDS']['howpublished'])
-        self.typeLineEdit = QLineEdit(fields['FIELDS']['type'])
-        self.numberLineEdit = QLineEdit(fields['FIELDS']['number'])
-        self.revisionLineEdit = QLineEdit(fields['FIELDS']['revision'])
-        self.addressLineEdit = QLineEdit(fields['FIELDS']['address'])
-        self.urlLineEdit = QLineEdit(fields['FIELDS']['url'])
-        self.yearLineEdit = QLineEdit(fields['FIELDS']['year'])
-        self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
-        self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
-        self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
+        self.titleLineEdit = QLineEdit(fields['title'])
+        self.authorLineEdit = QLineEdit(fields['author'])
+        self.organizationLineEdit = QLineEdit(fields['organization'])
+        self.institutionLineEdit = QLineEdit(fields['institution'])
+        self.languageLineEdit = QLineEdit(fields['language'])
+        self.howPublishedLineEdit = QLineEdit(fields['howpublished'])
+        self.typeLineEdit = QLineEdit(fields['type'])
+        self.numberLineEdit = QLineEdit(fields['number'])
+        self.revisionLineEdit = QLineEdit(fields['revision'])
+        self.addressLineEdit = QLineEdit(fields['address'])
+        self.urlLineEdit = QLineEdit(fields['url'])
+        self.yearLineEdit = QLineEdit(fields['year'])
+        self.crossrefLineEdit = QLineEdit(fields['crossref'])
+        self.noteLineEdit = QLineEdit(fields['note'])
+        self.monthComboBox = MonthComboBox(fields['month'])
         # FIELD CHANGES CONNECTS
         self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
         self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
@@ -142,7 +142,7 @@ class StandardEditor(QWidget):
         self.setLayout(mainLayout)
 
     def userFieldChange(self, text, field):
-        self.fields['FIELDS'][field] = text
+        self.fields[field] = text
         self.fieldChanged.emit()
 
 
@@ -154,16 +154,16 @@ class TechReportEditor(QWidget):
         self.currentDir = path
         self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
-        self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
-        self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
-        self.institutionLineEdit = QLineEdit(fields['FIELDS']['institution'])
-        self.typeLineEdit = QLineEdit(fields['FIELDS']['type'])
-        self.numberLineEdit = QLineEdit(fields['FIELDS']['number'])
-        self.addressLineEdit = QLineEdit(fields['FIELDS']['address'])
-        self.yearLineEdit = QLineEdit(fields['FIELDS']['year'])
-        self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
-        self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
-        self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
+        self.titleLineEdit = QLineEdit(fields['title'])
+        self.authorLineEdit = QLineEdit(fields['author'])
+        self.institutionLineEdit = QLineEdit(fields['institution'])
+        self.typeLineEdit = QLineEdit(fields['type'])
+        self.numberLineEdit = QLineEdit(fields['number'])
+        self.addressLineEdit = QLineEdit(fields['address'])
+        self.yearLineEdit = QLineEdit(fields['year'])
+        self.crossrefLineEdit = QLineEdit(fields['crossref'])
+        self.noteLineEdit = QLineEdit(fields['note'])
+        self.monthComboBox = MonthComboBox(fields['month'])
         # FIELD CHANGES CONNECTS
         self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
         self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
@@ -200,7 +200,7 @@ class TechReportEditor(QWidget):
         self.setLayout(mainLayout)
 
     def userFieldChange(self, text, field):
-        self.fields['FIELDS'][field] = text
+        self.fields[field] = text
         self.fieldChanged.emit()
 
 

@@ -67,6 +67,10 @@ class BibEditor(QTabWidget):
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
         editButton.clicked.connect(lambda: self.sourceEdit(sourceTag))
+        # Access Button
+
+
+
         # Selecting Toggle
         debugToggle = QPushButton()
         debugToggle.setCheckable(True)
@@ -81,14 +85,24 @@ class BibEditor(QTabWidget):
         self.sourcesTable.setCellWidget(rowPosition, 5, debugToggle)
 
     def sourceEdit(self, sourceTag):
-        sourceEditor = self.editors[sourceTag]
-        if not sourceEditor.generated:
-            sourceEditor.initialize(sourceTag, self.tracker.sources[sourceTag])
-            sourceEditor.returnClicked.connect(self.goBackToSources)
-        self.stackedWidget.setCurrentWidget(sourceEditor)
+        if not self.editors[sourceTag].generated:
+            self.editors[sourceTag].initialize(sourceTag, self.tracker.sources[sourceTag])
+            self.editors[sourceTag].returnClicked.connect(self.goBackToSources)
+            self.editors[sourceTag].typeFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
+            self.editors[sourceTag].generalFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
+        self.stackedWidget.setCurrentWidget(self.editors[sourceTag])
 
     def goBackToSources(self):
         self.stackedWidget.setCurrentIndex(0)
+
+    def sourceFieldChange(self, sourceTag):
+        # SOURCE TYPE FIELDS CHANGE
+        self.tracker.sources[sourceTag]['FIELDS'] = self.editors[sourceTag].typeFieldsEditor.fields
+        # GENERAL FIELDS CHANGE
+        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
+        self.tracker.sources[sourceTag]['PDF'] = self.editors[sourceTag].generalFieldsEditor.pdfLineEdit.text()
+        self.tracker.sources[sourceTag]['URL'] = self.editors[sourceTag].generalFieldsEditor.urlLineEdit.text()
+        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.text()
 
     def changeSelectedState(self):
         senderWidget: QPushButton = self.sender()
@@ -108,16 +122,16 @@ class SourceEditor(QWidget):
         self.typeFieldsEditor = None
         self.goBackButton = None
         self.generalFieldsEditor = None
-        self.sourceTag, self.fields = None, None
+        self.sourceTag = None
         self.generated = False
 
     def initialize(self, sourceTag, fields):
         self.goBackButton = QPushButton('Go Back to Source List', self)
         self.goBackButton.clicked.connect(self.returnClicked.emit)
-        self.sourceTag, self.fields = sourceTag, fields
+        self.sourceTag = sourceTag
         self.generated = True
         self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, sourceTag, fields)
-        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields)
+        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields['FIELDS'])
         mainLayout = QGridLayout(self)
         mainLayout.addWidget(self.goBackButton, 0, 0, 1, 2)
         mainLayout.addWidget(self.generalFieldsEditor, 1, 0)

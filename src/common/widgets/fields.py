@@ -16,13 +16,13 @@ from src.common.widgets.widgets import SquareIconButton
 class GeneralFieldsEditor(QWidget):
     tagChanged = pyqtSignal()
     typeChanged = pyqtSignal()
-    fieldsChanged = pyqtSignal()
+    fieldChanged = pyqtSignal()
 
     def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
         self.settings = loadSettings('settings')
-        self.sourceTag, self.fields = sourceTag, fields
+        self.sourceTag = sourceTag
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         self.sourceTypes = {'ARTICLE': 'Article', 'BOOK': 'Book', 'BOOKLET': 'Booklet', 'CONFERENCE': 'Conference',
                             'INBOOK': 'InBook', 'INCOLLECTION': 'InCollection', 'INPROCEEDINGS': 'InProceedings',
@@ -31,10 +31,11 @@ class GeneralFieldsEditor(QWidget):
                             'TECHREPORT': 'TechReport', 'UNPUBLISHED': 'Unpublished', 'URL': 'URL'}
         # GENERAL FIELDS & LABELS
         self.tagLineEdit = QLineEdit(self.sourceTag)
+        self.tagLineEdit.setDisabled(True)
         self.tagLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.sourceTypeComboBox = QComboBox()
         self.sourceTypeComboBox.addItems(list(self.sourceTypes.values()))
-        self.sourceTypeComboBox.setCurrentText(self.sourceTypes[self.fields['TYPE']])
+        self.sourceTypeComboBox.setCurrentText(self.sourceTypes[fields['TYPE']])
         self.sourceTypeComboBox.setDisabled(True)   # TODO : Remove when type change works
         self.sourceTypeComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         tagLabel, typeLabel, accessLabel, descriptionLabel = QLabel("Tag:"), QLabel("Type:"), QLabel("Access:"), QLabel("Description:")
@@ -46,7 +47,7 @@ class GeneralFieldsEditor(QWidget):
         self.accessTypeComboBox = QComboBox()
         self.accessOptions = ['NONE', 'PDF', 'URL']
         self.accessTypeComboBox.addItems(self.accessOptions)
-        self.accessTypeComboBox.setCurrentText(self.fields['ACCESS'])
+        self.accessTypeComboBox.setCurrentText(fields['ACCESS'])
         self.accessTypeComboBox.currentIndexChanged.connect(self._changeAccessType)
         self.accessTypeComboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.accessStackWidget = QStackedWidget()
@@ -55,7 +56,7 @@ class GeneralFieldsEditor(QWidget):
         # Pdf Widget and Layout
         pdfWidget = QWidget()
         pdfLayout = QHBoxLayout()
-        self.pdfLineEdit = QLineEdit(self.fields['PDF'])
+        self.pdfLineEdit = QLineEdit(fields['PDF'])
         self.pdfLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.pdfButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-file-explorer-96.png', self)
         self.pdfButton.clicked.connect(self._changePdfAccess)
@@ -65,7 +66,7 @@ class GeneralFieldsEditor(QWidget):
         # Url Widget and Layout
         urlWidget = QWidget()
         urlLayout = QHBoxLayout()
-        self.urlLineEdit = QLineEdit(self.fields['URL'])
+        self.urlLineEdit = QLineEdit(fields['URL'])
         self.urlLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.urlLineEdit.textChanged.connect(self._changeUrlAccess)
         self.urlButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-globe-96.png', self)
@@ -77,13 +78,13 @@ class GeneralFieldsEditor(QWidget):
         self.accessStackWidget.addWidget(QWidget())
         self.accessStackWidget.addWidget(pdfWidget)
         self.accessStackWidget.addWidget(urlWidget)
-        self.accessStackWidget.setCurrentIndex(self.accessOptions.index(self.fields['ACCESS']))
+        self.accessStackWidget.setCurrentIndex(self.accessOptions.index(fields['ACCESS']))
         # KEYWORDS WIDGET
         # self.keywordsWidget = TagWidget('Keywords :')
         # self.keywordsWidget.populateTags(self.fields['KEYWORDS'])
-        # self.keywordsWidget.tagChange.connect(self.fieldsChanged.emit)
+        # self.keywordsWidget.tagChange.connect(self.fieldChanged.emit)
         # DESCRIPTION EDIT
-        self.descriptionEdit = QLineEdit(self.fields['DESCRIPTION'])
+        self.descriptionEdit = QLineEdit(fields['DESCRIPTION'])
         self.descriptionEdit.textChanged.connect(self._changeDescription)
         self.descriptionEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
@@ -102,28 +103,23 @@ class GeneralFieldsEditor(QWidget):
 
     def _changeAccessType(self):
         self.accessStackWidget.setCurrentIndex(self.accessTypeComboBox.currentIndex())
-        self.fields['ACCESS'] = self.accessTypeComboBox.currentText()
-        self.fieldsChanged.emit()
+        self.fieldChanged.emit()
 
     def _changePdfAccess(self):
         defaultDir = self.pdfLineEdit.text()
         filePath, _ = QFileDialog.getOpenFileName(self, "Select PDF File", defaultDir, "PDF Files (*.pdf)")
         if os.path.exists(filePath):
             self.pdfLineEdit.setText(filePath)
-            self.fields['PDF'] = filePath
-            self.fieldsChanged.emit()
+            self.fieldChanged.emit()
 
     def _changeUrlAccess(self):
-        self.fields['URL'] = self.urlLineEdit.text()
-        self.fieldsChanged.emit()
+        self.fieldChanged.emit()
 
     def _changeKeywords(self):
-        self.fields['KEYWORDS'] = self.keywordsWidget.tagTexts
-        self.fieldsChanged.emit()
+        self.fieldChanged.emit()
 
     def _changeDescription(self):
-        self.fields['DESCRIPTION'] = self.descriptionEdit.text()
-        self.fieldsChanged.emit()
+        self.fieldChanged.emit()
 
     def openUrlAccess(self):
         if self.urlLineEdit.text():
