@@ -1,5 +1,6 @@
 import os
 import json
+import webbrowser
 import pandas as pd
 
 # ------------------- PyQt Modules -------------------- #
@@ -68,21 +69,40 @@ class BibEditor(QTabWidget):
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
         editButton.clicked.connect(lambda: self.sourceEdit(sourceTag))
         # Access Button
-
-
-
+        if sourceDict['ACCESS'] == 'URL':
+            accessButton = QPushButton('URL')
+            accessButton.clicked.connect(self.sourceAccessOpen)
+        elif sourceDict['ACCESS'] == 'PDF':
+            accessButton = QPushButton('PDF')
+            accessButton.clicked.connect(self.sourceAccessOpen)
+        else:
+            accessButton = QWidget()
         # Selecting Toggle
         debugToggle = QPushButton()
         debugToggle.setCheckable(True)
         debugToggle.setChecked(sourceDict['SELECTED'])
         debugToggle.clicked.connect(self.changeSelectedState)
+        # DESCRIPTION ITEM
+        descriptionItem = QTableWidgetItem(sourceDict['DESCRIPTION'])
         # Adding Items & Widgets to Table Row
         rowPosition = self.sourcesTable.rowCount()
         self.sourcesTable.insertRow(rowPosition)
         self.sourcesTable.setItem(rowPosition, 0, nameItem)
         self.sourcesTable.setItem(rowPosition, 1, typeItem)
         self.sourcesTable.setCellWidget(rowPosition, 2, editButton)
+        self.sourcesTable.setCellWidget(rowPosition, 3, accessButton)
+        self.sourcesTable.setItem(rowPosition, 4, descriptionItem)
         self.sourcesTable.setCellWidget(rowPosition, 5, debugToggle)
+
+    def sourceAccessOpen(self):
+        senderWidget: QPushButton = self.sender()
+        row = self.sourcesTable.indexAt(senderWidget.pos()).row()
+        item = self.sourcesTable.item(row, 0)
+        sourceTag = item.text()
+        if self.tracker.sources[sourceTag]['ACCESS'] == 'PDF':
+            os.startfile(self.tracker.sources[sourceTag]['PDF'])
+        if self.tracker.sources[sourceTag]['ACCESS'] == 'URL':
+            webbrowser.open(self.tracker.sources[sourceTag]['URL'])
 
     def sourceEdit(self, sourceTag):
         if not self.editors[sourceTag].generated:
@@ -102,7 +122,24 @@ class BibEditor(QTabWidget):
         self.tracker.sources[sourceTag]['ACCESS'] = self.editors[sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
         self.tracker.sources[sourceTag]['PDF'] = self.editors[sourceTag].generalFieldsEditor.pdfLineEdit.text()
         self.tracker.sources[sourceTag]['URL'] = self.editors[sourceTag].generalFieldsEditor.urlLineEdit.text()
-        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.text()
+        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
+        # RESET ACCESS BUTTON
+        for row in range(self.sourcesTable.rowCount()):
+            item = self.sourcesTable.item(row, 0)  # Assuming you're searching in column 0
+            if item is not None and item.text() == sourceTag:
+                break
+        if self.tracker.sources[sourceTag]['ACCESS'] == 'URL':
+            accessButton = QPushButton('URL')
+            accessButton.clicked.connect(self.sourceAccessOpen)
+        elif self.tracker.sources[sourceTag]['ACCESS'] == 'PDF':
+            accessButton = QPushButton('PDF')
+            accessButton.clicked.connect(self.sourceAccessOpen)
+        else:
+            accessButton = QWidget()
+        self.sourcesTable.setCellWidget(row, 3, accessButton)
+        # CHANGE DESCRIPTION ITEM
+        item = QTableWidgetItem(self.tracker.sources[sourceTag]['DESCRIPTION'])
+        self.sourcesTable.setItem(row, 4, item)
 
     def changeSelectedState(self):
         senderWidget: QPushButton = self.sender()

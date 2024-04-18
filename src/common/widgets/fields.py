@@ -84,8 +84,9 @@ class GeneralFieldsEditor(QWidget):
         # self.keywordsWidget.populateTags(self.fields['KEYWORDS'])
         # self.keywordsWidget.tagChange.connect(self.fieldChanged.emit)
         # DESCRIPTION EDIT
-        self.descriptionEdit = QLineEdit(fields['DESCRIPTION'])
+        self.descriptionEdit = QPlainTextEdit(fields['DESCRIPTION'])
         self.descriptionEdit.textChanged.connect(self._changeDescription)
+        self.descriptionEdit.setWordWrapMode(QTextOption.WordWrap)
         self.descriptionEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # MAIN LAYOUT
