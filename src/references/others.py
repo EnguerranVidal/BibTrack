@@ -15,10 +15,12 @@ from src.common.widgets.widgets import SquareIconButton, IconButton
 
 ######################## CLASSES ########################
 class OnlineEditor(QWidget):
+    fieldChanged = pyqtSignal()
+
     def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.sourceTag = sourceTag
+        self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
         self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
         self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
@@ -26,6 +28,13 @@ class OnlineEditor(QWidget):
         self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
         self.urlLineEdit = QLineEdit(fields['FIELDS']['url'])
         self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
+        # FIELD CHANGES CONNECTS
+        self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
+        self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
+        self.yearLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'year'))
+        self.noteLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'note'))
+        self.monthComboBox.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'month'))
+        self.urlLineEdit.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'url'))
         # MAIN LAYOUT CREATION
         mainLayout = QGridLayout()
         mainLayout.addWidget(QLabel('Title:'), 0, 0)
@@ -42,12 +51,18 @@ class OnlineEditor(QWidget):
         mainLayout.addWidget(self.noteLineEdit, 8, 0, 1, 4)
         self.setLayout(mainLayout)
 
+    def userFieldChange(self, text, field):
+        self.fields['FIELDS'][field] = text
+        self.fieldChanged.emit()
+
 
 class MiscEditor(QWidget):
+    fieldChanged = pyqtSignal()
+
     def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.sourceTag = sourceTag
+        self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
         self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
         self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
@@ -56,6 +71,14 @@ class MiscEditor(QWidget):
         self.howPublishedLineEdit = QLineEdit(fields['FIELDS']['howpublished'])
         self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
         self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
+        # FIELD CHANGES CONNECTS
+        self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
+        self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
+        self.yearLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'year'))
+        self.howPublishedLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'howpublished'))
+        self.crossrefLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'crossref'))
+        self.noteLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'note'))
+        self.monthComboBox.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'month'))
         # MAIN LAYOUT CREATION
         mainLayout = QGridLayout()
         mainLayout.addWidget(QLabel('Title:'), 0, 0)
@@ -74,12 +97,18 @@ class MiscEditor(QWidget):
         mainLayout.addWidget(self.noteLineEdit, 10, 0, 1, 4)
         self.setLayout(mainLayout)
 
+    def userFieldChange(self, text, field):
+        self.fields['FIELDS'][field] = text
+        self.fieldChanged.emit()
+
 
 class UnpublishedEditor(QWidget):
+    fieldChanged = pyqtSignal()
+
     def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.sourceTag = sourceTag
+        self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
         self.titleLineEdit = QLineEdit(fields['FIELDS']['title'])
         self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
@@ -87,6 +116,13 @@ class UnpublishedEditor(QWidget):
         self.monthComboBox = MonthComboBox(fields['FIELDS']['month'])
         self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
         self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
+        # FIELD CHANGES CONNECTS
+        self.titleLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'title'))
+        self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
+        self.yearLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'year'))
+        self.crossrefLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'crossref'))
+        self.noteLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'note'))
+        self.monthComboBox.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'month'))
         # MAIN LAYOUT CREATION
         mainLayout = QGridLayout()
         mainLayout.addWidget(QLabel('Title:'), 0, 0)
@@ -103,12 +139,18 @@ class UnpublishedEditor(QWidget):
         mainLayout.addWidget(self.noteLineEdit, 8, 0, 1, 4)
         self.setLayout(mainLayout)
 
+    def userFieldChange(self, text, field):
+        self.fields['FIELDS'][field] = text
+        self.fieldChanged.emit()
+
 
 class UrlEditor(QWidget):
+    fieldChanged = pyqtSignal()
+
     def __init__(self, path, sourceTag, fields):
         super().__init__()
         self.currentDir = path
-        self.sourceTag = sourceTag
+        self.sourceTag, self.fields = sourceTag, fields
         # FIELDS LINE EDITS
         self.authorLineEdit = QLineEdit(fields['FIELDS']['author'])
         self.seriesLineEdit = QLineEdit(fields['FIELDS']['series'])
@@ -117,6 +159,14 @@ class UrlEditor(QWidget):
         self.editionComboBox = EditionComboBox(fields['FIELDS']['edition'])
         self.crossrefLineEdit = QLineEdit(fields['FIELDS']['crossref'])
         self.noteLineEdit = QLineEdit(fields['FIELDS']['note'])
+        # FIELD CHANGES CONNECTS
+        self.authorLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'author'))
+        self.yearLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'year'))
+        self.seriesLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'series'))
+        self.crossrefLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'crossref'))
+        self.noteLineEdit.textChanged.connect(lambda text: self.userFieldChange(text, 'note'))
+        self.monthComboBox.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'month'))
+        self.editionComboBox.currentTextChanged.connect(lambda text: self.userFieldChange(text, 'edition'))
         # MAIN LAYOUT CREATION
         mainLayout = QGridLayout()
         mainLayout.addWidget(QLabel('Authors:'), 0, 0)
@@ -132,6 +182,10 @@ class UrlEditor(QWidget):
         mainLayout.addWidget(QLabel('Crossref:'), 6, 0)
         mainLayout.addWidget(self.crossrefLineEdit, 7, 0, 1, 4)
         self.setLayout(mainLayout)
+
+    def userFieldChange(self, text, field):
+        self.fields['FIELDS'][field] = text
+        self.fieldChanged.emit()
 
 
 ######################## FUNCTIONS ########################
