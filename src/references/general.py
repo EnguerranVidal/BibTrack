@@ -13,6 +13,7 @@ from src.common.utilities.fileSystem import loadSettings
 from src.common.widgets.fields import GeneralFieldsEditor
 from src.common.widgets.widgets import SquareIconButton, IconButton
 # References
+from src.references.search import *
 from src.references.academics import *
 from src.references.books import *
 from src.references.technicals import *
@@ -20,17 +21,17 @@ from src.references.others import *
 
 
 ######################## CLASSES ########################
-class BibEditor(QTabWidget):
+class BibEditor(QWidget):
     change = pyqtSignal()
 
     def __init__(self, path, bibPath):
-        super(QTabWidget, self).__init__()
+        super(QWidget, self).__init__()
         self.currentDir, self.bibPath = path, bibPath
         self.tracker = BibTracker(self.bibPath)
         self.settings = loadSettings('settings')
         self.editors = {}
         # SOURCE TABLE
-        self.stackedWidget = QStackedWidget(self)
+        self.sourceStackedWidget = QStackedWidget(self)
         self.sourcesTable = QTableWidget()
         self.sourcesTable.setColumnCount(6)
         self.sourcesTable.setFrameStyle(QTableWidget.NoFrame)
@@ -44,12 +45,22 @@ class BibEditor(QTabWidget):
         self.sourcesTable.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self.sourcesTable.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.sourcesTable.setHorizontalHeaderLabels(['NAME', 'TYPE', '', '', 'DESCRIPTION', ''])
-        self.stackedWidget.addWidget(self.sourcesTable)
+        self.sourceStackedWidget.addWidget(self.sourcesTable)
         self.populateSourcesTable()
-        self.stackedWidget.setCurrentIndex(0)
+        self.sourceStackedWidget.setCurrentIndex(0)
         # MAIN TABS
-        self.addTab(self.stackedWidget, "SOURCES")
-        self.addTab(QWidget(), "COMPLETION")
+        self.mainStackedWidget = QStackedWidget(self)
+        self.tabWidget = QTabWidget(self)
+        self.tabWidget.addTab(self.sourceStackedWidget, "SOURCES")
+        self.tabWidget.addTab(QWidget(), "COMPLETION")
+        self.mainStackedWidget.addWidget(self.tabWidget)
+        # SEARCH BAR WIDGET
+        self.searchBar = SearchBar([], 5, parent=self)
+        # MAIN LAYOUT
+        mainLayout = QVBoxLayout()
+        mainLayout.addWidget(self.searchBar)
+        mainLayout.addWidget(self.mainStackedWidget)
+        self.setLayout(mainLayout)
 
     def populateSourcesTable(self):
         self.sourcesTable.setRowCount(0)
@@ -63,7 +74,7 @@ class BibEditor(QTabWidget):
         typeItem = QTableWidgetItem(sourceDict['TYPE'])
         # Source Editor
         self.editors[sourceTag] = SourceEditor(self.currentDir)
-        self.stackedWidget.addWidget(self.editors[sourceTag])
+        self.sourceStackedWidget.addWidget(self.editors[sourceTag])
         # Editor Button
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
@@ -110,10 +121,10 @@ class BibEditor(QTabWidget):
             self.editors[sourceTag].returnClicked.connect(self.goBackToSources)
             self.editors[sourceTag].typeFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
             self.editors[sourceTag].generalFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
-        self.stackedWidget.setCurrentWidget(self.editors[sourceTag])
+        self.sourceStackedWidget.setCurrentWidget(self.editors[sourceTag])
 
     def goBackToSources(self):
-        self.stackedWidget.setCurrentIndex(0)
+        self.sourceStackedWidget.setCurrentIndex(0)
 
     def sourceFieldChange(self, sourceTag):
         # SOURCE TYPE FIELDS CHANGE
