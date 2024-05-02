@@ -1,5 +1,6 @@
 numpy~=1.25.2
 pandas~=2.0.3
+PyPDF2~=3.0.1
 pyqt5~=5.15.9
 requests~=2.31.0
 scipy~=1.11.2

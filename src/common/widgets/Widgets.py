@@ -221,6 +221,5 @@ class ResizableListingWidget(QWidget):
         self.adjustWidgets()
 
     def removeWidget(self, widget):
-        # self.layout.removeWidget(widget)
         self.widgets.remove(widget)
         self.adjustWidgets()

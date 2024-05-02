@@ -47,20 +47,22 @@ class BibEditor(QWidget):
         self.sourcesTable.setHorizontalHeaderLabels(['NAME', 'TYPE', '', '', 'DESCRIPTION', ''])
         self.sourceStackedWidget.addWidget(self.sourcesTable)
         self.populateSourcesTable()
-        self.sourceStackedWidget.setCurrentIndex(0)
         # MAIN TABS
         self.mainStackedWidget = QStackedWidget(self)
-        self.tabWidget = QTabWidget(self)
-        self.tabWidget.addTab(self.sourceStackedWidget, "SOURCES")
-        self.tabWidget.addTab(QWidget(), "COMPLETION")
-        self.mainStackedWidget.addWidget(self.tabWidget)
+        self.mainStackedWidget.addWidget(self.sourcesTable)
         # SEARCH BAR WIDGET
         self.searchBar = SearchBar([], 5, parent=self)
+        self.searchWidget = ReferenceSearch(self.currentDir)
+        self.searchBar.toggleSearchingMode.connect(self.toggleSearchMode)
+        self.searchBar.searchDone.connect(self.searchingTerm)
+        self.mainStackedWidget.addWidget(self.searchWidget)
+
         # MAIN LAYOUT
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(self.searchBar)
         mainLayout.addWidget(self.mainStackedWidget)
         self.setLayout(mainLayout)
+        self.mainStackedWidget.setCurrentIndex(0)
 
     def populateSourcesTable(self):
         self.sourcesTable.setRowCount(0)
@@ -158,6 +160,17 @@ class BibEditor(QWidget):
         tags = list(self.tracker.sources.keys())
         self.tracker.sources[tags[row]]['SELECTED'] = senderWidget.isChecked()
         self.change.emit()
+
+    def toggleSearchMode(self):
+        if self.searchBar.searching:
+            self.mainStackedWidget.setCurrentIndex(1)
+            self.searchingTerm()
+        else:
+            self.mainStackedWidget.setCurrentIndex(0)
+
+    def searchingTerm(self):
+        searchedText = self.searchBar.text()
+        self.searchWidget.searchInSources(self.tracker.sources, searchedText)
 
 
 class SourceEditor(QWidget):
