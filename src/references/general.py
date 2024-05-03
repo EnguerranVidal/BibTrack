@@ -9,8 +9,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
-from src.common.utilities.fileSystem import loadSettings
-from src.common.widgets.fields import GeneralFieldsEditor
+from src.common.utilities.fileSystem import loadSettings, saveSettings
+from src.common.widgets.fields import GeneralFieldsEditor, SourceEditor
 from src.common.widgets.widgets import SquareIconButton, IconButton
 # References
 from src.references.search import *
@@ -47,22 +47,25 @@ class BibEditor(QWidget):
         self.sourcesTable.setHorizontalHeaderLabels(['NAME', 'TYPE', '', '', 'DESCRIPTION', ''])
         self.sourceStackedWidget.addWidget(self.sourcesTable)
         self.populateSourcesTable()
-        # MAIN TABS
-        self.mainStackedWidget = QStackedWidget(self)
-        self.mainStackedWidget.addWidget(self.sourcesTable)
-        # SEARCH BAR WIDGET
+        # SEARCH BAR & SEARCH OPTIONS
         self.searchBar = SearchBar([], 5, parent=self)
-        self.searchWidget = ReferenceSearch(self.currentDir)
         self.searchBar.toggleSearchingMode.connect(self.toggleSearchMode)
         self.searchBar.searchDone.connect(self.searchingTerm)
-        self.mainStackedWidget.addWidget(self.searchWidget)
+        self.searchComboBox = QComboBox()
+        self.searchOptions = ['SEARCH BY ...', 'BIBTEX', 'KEYWORD', 'DESCRIPTION', 'FIELDS']
+        self.searchComboBox.addItems(self.searchOptions)
+        self.searchComboBox.setCurrentText(self.settings['SEARCH_BY'])
+        self.searchComboBox.currentIndexChanged.connect(self.changeSearchOption)
+        self.searchComboBox.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         # MAIN LAYOUT
+        searchLayout = QHBoxLayout()
+        searchLayout.addWidget(self.searchBar)
+        searchLayout.addWidget(self.searchComboBox)
         mainLayout = QVBoxLayout()
-        mainLayout.addWidget(self.searchBar)
-        mainLayout.addWidget(self.mainStackedWidget)
+        mainLayout.addLayout(searchLayout)
+        mainLayout.addWidget(self.sourceStackedWidget)
         self.setLayout(mainLayout)
-        self.mainStackedWidget.setCurrentIndex(0)
 
     def populateSourcesTable(self):
         self.sourcesTable.setRowCount(0)
@@ -132,10 +135,12 @@ class BibEditor(QWidget):
         # SOURCE TYPE FIELDS CHANGE
         self.tracker.sources[sourceTag]['FIELDS'] = self.editors[sourceTag].typeFieldsEditor.fields
         # GENERAL FIELDS CHANGE
-        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
+        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[
+            sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
         self.tracker.sources[sourceTag]['PDF'] = self.editors[sourceTag].generalFieldsEditor.pdfLineEdit.text()
         self.tracker.sources[sourceTag]['URL'] = self.editors[sourceTag].generalFieldsEditor.urlLineEdit.text()
-        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
+        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[
+            sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
         # RESET ACCESS BUTTON
         for row in range(self.sourcesTable.rowCount()):
             item = self.sourcesTable.item(row, 0)  # Assuming you're searching in column 0
@@ -163,46 +168,99 @@ class BibEditor(QWidget):
 
     def toggleSearchMode(self):
         if self.searchBar.searching:
-            self.mainStackedWidget.setCurrentIndex(1)
             self.searchingTerm()
         else:
-            self.mainStackedWidget.setCurrentIndex(0)
+            for row in range(self.sourcesTable.rowCount()):
+                self.sourcesTable.setRowHidden(row, False)
 
     def searchingTerm(self):
-        searchedText = self.searchBar.text()
-        self.searchWidget.searchInSources(self.tracker.sources, searchedText)
+        results = self.searchInSources(self.searchBar.text())
+        if self.searchComboBox.currentIndex() == 0:
+            for row in range(self.sourcesTable.rowCount()):
+                item = self.sourcesTable.item(row, 0)
+                if item is not None and item.text() in results['ALL']:
+                    self.sourcesTable.setRowHidden(row, False)
+                else:
+                    self.sourcesTable.setRowHidden(row, True)
+        else:
+            for row in range(self.sourcesTable.rowCount()):
+                item = self.sourcesTable.item(row, 0)
+                if item is not None and item.text() in results[self.searchComboBox.currentText()]:
+                    self.sourcesTable.setRowHidden(row, False)
+                else:
+                    self.sourcesTable.setRowHidden(row, True)
 
+    def changeSearchOption(self):
+        self.settings['SEARCH_BY'] = self.searchComboBox.currentText()
+        saveSettings(self.settings, 'settings')
+        if self.searchBar.searching:
+            self.searchingTerm()
 
-class SourceEditor(QWidget):
-    returnClicked = pyqtSignal()
+    def searchInSources(self, terms):
+        results = {'ALL': [], 'BIBTEX': [], 'DESCRIPTION': [], 'KEYWORD': [], 'FIELDS': []}
+        for key, value in self.tracker.sources.items():
+            for term in terms:
+                if term.lower() in key.lower() or term.lower() == key.lower():
+                    results['BIBTEX'].append(key)
+                    if key not in results['ALL']:
+                        results['ALL'].append(key)
+            if 'FIELDS' in value and value['FIELDS']:
+                for fieldKey, fieldValue in value['FIELDS'].items():
+                    if isinstance(fieldValue, str):
+                        for term in terms:
+                            if term.lower() in fieldValue.lower():
+                                results['FIELDS'].append(key)
+                                if key not in results['ALL']:
+                                    results['ALL'].append(key)
+            if 'DESCRIPTION' in value and value['DESCRIPTION']:
+                for term in terms:
+                    if term.lower() in value['DESCRIPTION'].lower():
+                        results['DESCRIPTION'].append(key)
+                        if key not in results['ALL']:
+                            results['ALL'].append(key)
+            if 'KEYWORD' in value and value['KEYWORD']:
+                for keyword in value['KEYWORD']:
+                    for term in terms:
+                        if term.lower() in keyword.lower():
+                            results['KEYWORD'].append(key)
+                            if key not in results['ALL']:
+                                results['ALL'].append(key)
+            # if value['ACCESS'] == 'PDF' and value['PDF']:
+            #     results['PDF'] = {}
+            #     termCounts = {}
+            #     with open(value['PDF'], 'rb') as pdf_file:
+            #         pdfReader = PyPDF2.PdfReader(pdf_file)
+            #         for pageNum in range(len(pdfReader.pages)):
+            #             pageText = pdfReader.pages[pageNum].extract_text()
+            #             for term in terms:
+            #                 termCount = pageText.lower().count(term.lower())
+            #                 if termCount > 0:
+            #                     if term not in termCounts:
+            #                         termCounts[term] = termCount
+            #                     else:
+            #                         termCounts[term] += termCount
+            #     results['PDF'][key] = termCounts
+        return results
 
-    def __init__(self, path):
-        super().__init__()
-        self.currentDir = path
-        self.generators = getGeneratorList()
-        self.typeFieldsEditor = None
-        self.goBackButton = None
-        self.generalFieldsEditor = None
-        self.sourceTag = None
-        self.generated = False
-
-    def initialize(self, sourceTag, fields):
-        self.goBackButton = QPushButton('Go Back to Source List', self)
-        self.goBackButton.clicked.connect(self.returnClicked.emit)
-        self.sourceTag = sourceTag
-        self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, sourceTag, fields)
-        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields['FIELDS'])
-        mainLayout = QGridLayout(self)
-        mainLayout.addWidget(self.goBackButton, 0, 0, 1, 2)
-        mainLayout.addWidget(self.generalFieldsEditor, 1, 0)
-        mainLayout.addWidget(self.typeFieldsEditor, 1, 1)
-        self.setLayout(mainLayout)
+    def deleteSelectedRows(self):
+        selectedRows = [item.row() for item in self.telecommandTable.selectedItems()]
+        if len(selectedRows):
+            selectedRows = sorted(list(set(selectedRows)))
+            dialog = SourceDeletionMessageBox(selectedRows)
+            result = dialog.exec_()
+            if result == QMessageBox.Yes:
+                for row in reversed(selectedRows):
+                    self.sourcesTable.removeRow(row)
+                    sourceTag = self.sourcesTable.item(row, 0).text()
+                    self.tracker.removeSource(sourceTag)
+                self.change.emit()
 
 
 class NewBibTrackWindow(QDialog):
-    def __init__(self, parent=None, bibTracks=[]):
+    def __init__(self, parent=None, bibTracks=None):
         super().__init__(parent)
+        if bibTracks is None:
+            bibTracks = []
         self.bibTracks = bibTracks
         self.setWindowTitle('Create New BibTrack')
         self.setModal(True)
@@ -265,6 +323,18 @@ class NewSourceWindow(QDialog):
         self.okButton.setEnabled(validNewSourceName)
 
 
+class SourceDeletionMessageBox(QMessageBox):
+    def __init__(self, selectedRows):
+        super().__init__()
+        self.setModal(True)
+        self.setIcon(QMessageBox.Question)
+        self.setWindowTitle('Confirmation')
+        self.setText(f'You are going to delete {len(selectedRows)} source(s).\n Do you want to proceed?')
+        self.addButton(QMessageBox.Yes)
+        self.addButton(QMessageBox.No)
+        self.setDefaultButton(QMessageBox.No)
+
+
 class BibTracker:
     def __init__(self, path):
         self.path = path
@@ -285,6 +355,9 @@ class BibTracker:
         newReference = {'TAG': tag, 'TYPE': source['TYPE']}
         self.references = pd.concat([self.references, pd.DataFrame([newReference])], ignore_index=True)
         self.sources[tag] = source
+
+    def removeSource(self, tag):
+        del self.sources[tag]
 
     def _loadSources(self):
         self.sources = {}
@@ -313,16 +386,3 @@ class BibTracker:
         if not isinstance(other, BibTracker):
             return False
         return self.sources == other.sources and self.references.equals(other.references)
-
-
-######################## FUNCTIONS ########################
-def getGeneratorList():
-    generators = {'ARTICLE': createArticleEditor, 'BOOK': createBookEditor, 'BOOKLET': createBookletEditor,
-                  'CONFERENCE': createConferenceEditor, 'INBOOK': createInBookEditor,
-                  'INCOLLECTION': createInCollectionEditor, 'INPROCEEDINGS': createInProceedingsEditor,
-                  'MANUAL': createManualEditor, 'MASTERSTHESIS': createMastersThesisEditor,
-                  'MISC': createMiscEditor, 'ONLINE': createOnlineEditor, 'PHDTHESIS': createPhdThesisEditor,
-                  'PROCEEDINGS': createProceedingsEditor, 'STANDARD': createStandardEditor,
-                  'TECHREPORT': createTechReportEditor, 'UNPUBLISHED': createUnpublishedEditor,
-                  'URL': createUrlEditor}
-    return generators

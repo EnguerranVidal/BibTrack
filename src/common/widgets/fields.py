@@ -10,9 +10,40 @@ from PyQt5.QtGui import *
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
 from src.common.widgets.widgets import SquareIconButton
+from src.references.academics import *
+from src.references.books import *
+from src.references.technicals import *
+from src.references.others import *
 
 
 ######################## CLASSES ########################
+class SourceEditor(QWidget):
+    returnClicked = pyqtSignal()
+
+    def __init__(self, path):
+        super().__init__()
+        self.currentDir = path
+        self.generators = getGeneratorList()
+        self.typeFieldsEditor = None
+        self.goBackButton = None
+        self.generalFieldsEditor = None
+        self.sourceTag = None
+        self.generated = False
+
+    def initialize(self, sourceTag, fields):
+        self.goBackButton = QPushButton('Go Back to Source List', self)
+        self.goBackButton.clicked.connect(self.returnClicked.emit)
+        self.sourceTag = sourceTag
+        self.generated = True
+        self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, sourceTag, fields)
+        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields['FIELDS'])
+        mainLayout = QGridLayout(self)
+        mainLayout.addWidget(self.goBackButton, 0, 0, 1, 2)
+        mainLayout.addWidget(self.generalFieldsEditor, 1, 0)
+        mainLayout.addWidget(self.typeFieldsEditor, 1, 1)
+        self.setLayout(mainLayout)
+
+
 class GeneralFieldsEditor(QWidget):
     tagChanged = pyqtSignal()
     typeChanged = pyqtSignal()
@@ -130,31 +161,14 @@ class GeneralFieldsEditor(QWidget):
             pass
 
 
-class MonthComboBox(QComboBox):
-    def __init__(self, inputMonth: str):
-        super().__init__()
-        self.months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-        self.addItems(self.months)
-        inMonths = [month.lower() for month in self.months]
-        abbreviations = [month[:3].lower() for month in self.months]
-        if inputMonth.lower() in inMonths:
-            self.setCurrentText(self.months[inMonths.index(inputMonth.lower())])
-        elif inputMonth.lower() in abbreviations:
-            self.setCurrentText(self.months[abbreviations.index(inputMonth.lower())])
-        else:
-            self.setCurrentText('')
-
-
-class EditionComboBox(QComboBox):
-    def __init__(self, inputEdition: str):
-        super().__init__()
-        self.editions = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eight', 'Ninth', 'Tenth']
-        self.addItems(self.editions)
-        inEditions = [edition.lower() for edition in self.editions]
-        abbreviations = [edition[:3].lower() for edition in self.editions]
-        if inputEdition.lower() in inEditions:
-            self.setCurrentText(self.editions[inEditions.index(inputEdition.lower())])
-        elif inputEdition.lower() in abbreviations:
-            self.setCurrentText(self.editions[abbreviations.index(inputEdition.lower())])
-        else:
-            self.setCurrentText('')
+######################## FUNCTIONS ########################
+def getGeneratorList():
+    generators = {'ARTICLE': createArticleEditor, 'BOOK': createBookEditor, 'BOOKLET': createBookletEditor,
+                  'CONFERENCE': createConferenceEditor, 'INBOOK': createInBookEditor,
+                  'INCOLLECTION': createInCollectionEditor, 'INPROCEEDINGS': createInProceedingsEditor,
+                  'MANUAL': createManualEditor, 'MASTERSTHESIS': createMastersThesisEditor,
+                  'MISC': createMiscEditor, 'ONLINE': createOnlineEditor, 'PHDTHESIS': createPhdThesisEditor,
+                  'PROCEEDINGS': createProceedingsEditor, 'STANDARD': createStandardEditor,
+                  'TECHREPORT': createTechReportEditor, 'UNPUBLISHED': createUnpublishedEditor,
+                  'URL': createUrlEditor}
+    return generators

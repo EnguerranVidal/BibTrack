@@ -9,7 +9,7 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings
-from src.common.widgets.fields import MonthComboBox, EditionComboBox
+from src.common.widgets.widgets import MonthComboBox, EditionComboBox
 from src.common.widgets.widgets import SquareIconButton, IconButton
 
 

@@ -56,70 +56,26 @@ class ReferenceSearch(QWidget):
 
     def searchInSources(self, sources, searchedText):
         self.clearResults()
-        terms = searchedText.split()
-        results = self.searchFromTerms(sources, terms)
-        hasResults = any(results.values())
-        print(results)
-        if not hasResults:
+        results = self.searchFromTerms(sources, searchedText.split())
+        if not any(results.values()):
             self.mainStackedWidget.setCurrentIndex(0)
         else:
             self.mainStackedWidget.setCurrentIndex(1)
             # ADDING TABS FOR EACH CATEGORY BASED ON RESULTS
             self.resultsPage.addTab(self.allResults, 'ALL')
+            self.populateAllResults(results)
             if results['KEYWORDS']:
                 self.resultsPage.addTab(self.keywordsResults, 'KEYWORDS')
+                self.populateKeywordsResults(results)
             if results['DESCRIPTION']:
                 self.resultsPage.addTab(self.descriptionResults, 'DESCRIPTIONS')
+                self.populateDescriptionsResults(results)
             if results['TAG']:
                 self.resultsPage.addTab(self.tagResults, 'TAGS')
+                self.populateTagsResults(results)
             if results['FIELDS']:
                 self.resultsPage.addTab(self.fieldsResults, 'FIELDS')
-
-    @staticmethod
-    def searchFromTerms(sources, terms):
-        results = {'TAG': [], 'DESCRIPTION': [], 'KEYWORDS': [], 'FIELDS': []}
-        for key, value in sources.items():
-            for term in terms:
-                if term.lower() in key.lower() or term.lower() == key.lower():
-                    results['TAG'].append(key)
-            if 'FIELDS' in value and value['FIELDS']:
-                for fieldKey, fieldValue in value['FIELDS'].items():
-                    pass
-
-            # for fieldKey, fieldValue in value['FIELDS'].items():
-            #     if isinstance(fieldValue, str):
-            #         for term in terms:
-            #             if term.lower() in fieldValue.lower():
-            #                 results[fieldKey].append(key)
-            #     elif isinstance(fieldValue, list):
-            #         for item in fieldValue:
-            #             if term.lower() in item.lower():
-            #                 results[fieldKey].append(key)
-            if 'DESCRIPTION' in value and value['DESCRIPTION']:
-                for term in terms:
-                    if term.lower() in value['DESCRIPTION'].lower():
-                        results['DESCRIPTION'].append(key)
-            if 'KEYWORDS' in value and value['KEYWORDS']:
-                for keyword in value['KEYWORDS']:
-                    for term in terms:
-                        if term.lower() in keyword.lower():
-                            results['KEYWORDS'].append(key)
-            # if value['ACCESS'] == 'PDF' and value['PDF']:
-            #     results['PDF'] = {}
-            #     termCounts = {}
-            #     with open(value['PDF'], 'rb') as pdf_file:
-            #         pdfReader = PyPDF2.PdfReader(pdf_file)
-            #         for pageNum in range(len(pdfReader.pages)):
-            #             pageText = pdfReader.pages[pageNum].extract_text()
-            #             for term in terms:
-            #                 termCount = pageText.lower().count(term.lower())
-            #                 if termCount > 0:
-            #                     if term not in termCounts:
-            #                         termCounts[term] = termCount
-            #                     else:
-            #                         termCounts[term] += termCount
-            #     results['PDF'][key] = termCounts
-        return results
+                self.populateFieldsResults(results)
 
 
 class SearchBar(QLineEdit):
@@ -202,18 +158,3 @@ class SearchBar(QLineEdit):
     def clearLineEdit(self):
         self.clear()
         self.setPlaceholderText('Search Source ...')
-
-
-class NoSourcesDisplay(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        font = QFont()
-        font.setPointSize(16)
-        self.messageLabel = QLabel('NO RESULTS')
-        self.messageLabel.setAlignment(Qt.AlignCenter)
-        self.messageLabel.setFont(font)
-        # MAIN LAYOUT
-        mainLayout = QVBoxLayout()
-        mainLayout.addWidget(self.messageLabel, alignment=Qt.AlignCenter)
-        mainLayout.setSpacing(0)
-        self.setLayout(mainLayout)

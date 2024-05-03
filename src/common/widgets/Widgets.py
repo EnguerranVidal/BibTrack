@@ -223,3 +223,33 @@ class ResizableListingWidget(QWidget):
     def removeWidget(self, widget):
         self.widgets.remove(widget)
         self.adjustWidgets()
+
+
+class MonthComboBox(QComboBox):
+    def __init__(self, inputMonth: str):
+        super().__init__()
+        self.months = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        self.addItems(self.months)
+        inMonths = [month.lower() for month in self.months]
+        abbreviations = [month[:3].lower() for month in self.months]
+        if inputMonth.lower() in inMonths:
+            self.setCurrentText(self.months[inMonths.index(inputMonth.lower())])
+        elif inputMonth.lower() in abbreviations:
+            self.setCurrentText(self.months[abbreviations.index(inputMonth.lower())])
+        else:
+            self.setCurrentText('')
+
+
+class EditionComboBox(QComboBox):
+    def __init__(self, inputEdition: str):
+        super().__init__()
+        self.editions = ['', 'First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth', 'Seventh', 'Eight', 'Ninth', 'Tenth']
+        self.addItems(self.editions)
+        inEditions = [edition.lower() for edition in self.editions]
+        abbreviations = [edition[:3].lower() for edition in self.editions]
+        if inputEdition.lower() in inEditions:
+            self.setCurrentText(self.editions[inEditions.index(inputEdition.lower())])
+        elif inputEdition.lower() in abbreviations:
+            self.setCurrentText(self.editions[abbreviations.index(inputEdition.lower())])
+        else:
+            self.setCurrentText('')
