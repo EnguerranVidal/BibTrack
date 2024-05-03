@@ -191,6 +191,7 @@ class BibEditor(QWidget):
                     self.sourcesTable.setRowHidden(row, True)
 
     def changeSearchOption(self):
+        self.settings = loadSettings('settings')
         self.settings['SEARCH_BY'] = self.searchComboBox.currentText()
         saveSettings(self.settings, 'settings')
         if self.searchBar.searching:
@@ -243,15 +244,15 @@ class BibEditor(QWidget):
         return results
 
     def deleteSelectedRows(self):
-        selectedRows = [item.row() for item in self.telecommandTable.selectedItems()]
+        selectedRows = [item.row() for item in self.sourcesTable.selectedItems()]
         if len(selectedRows):
             selectedRows = sorted(list(set(selectedRows)))
             dialog = SourceDeletionMessageBox(selectedRows)
             result = dialog.exec_()
             if result == QMessageBox.Yes:
                 for row in reversed(selectedRows):
-                    self.sourcesTable.removeRow(row)
                     sourceTag = self.sourcesTable.item(row, 0).text()
+                    self.sourcesTable.removeRow(row)
                     self.tracker.removeSource(sourceTag)
                 self.change.emit()
 
@@ -358,6 +359,7 @@ class BibTracker:
 
     def removeSource(self, tag):
         del self.sources[tag]
+        self.references = self.references.drop(self.references[self.references['TAG'] == tag].index)
 
     def _loadSources(self):
         self.sources = {}

@@ -170,6 +170,10 @@ class BibTrackGui(QMainWindow):
         self.newUrlAct = QAction('&URL', self)
         self.newUrlAct.setStatusTip('Add New URL')
         self.newUrlAct.triggered.connect(self.addNewUrl)
+        # Remove Sources
+        self.removeSourcesAct = QAction('&Delete Source', self)
+        self.removeSourcesAct.setStatusTip('Delete Selected Source')
+        self.removeSourcesAct.triggered.connect(self.deleteSelectedSource)
 
         ########### HELP ###########
         # Visit GitHub Page
@@ -184,6 +188,7 @@ class BibTrackGui(QMainWindow):
         self.aboutAct.triggered.connect(self.openAbout)
 
     def _createMenuBar(self):
+        print('hi')
         self.menubar = self.menuBar()
 
         ###  FILE MENU  ###
@@ -230,6 +235,8 @@ class BibTrackGui(QMainWindow):
         self.addSourcesMenu.addSeparator()
         self.addSourcesMenu.addMenu(self.otherSourcesMenu)
         self.sourcesMenu.addMenu(self.addSourcesMenu)
+        self.sourcesMenu.addAction(self.removeSourcesAct)
+        self.sourcesMenu.aboutToShow.connect(self._populateSourcesMenu)
 
         ###  HELP MENU  ###
         self.helpMenu = self.menubar.addMenu('&Help')
@@ -263,6 +270,7 @@ class BibTrackGui(QMainWindow):
     def _populateRecentMenu(self):
         self.recentMenu.clear()
         actions = []
+        self.settings = loadSettings('settings')
         filenames = [os.path.basename(path) for path in self.settings['OPENED_RECENTLY']]
         for filename in filenames:
             action = QAction(filename, self)
@@ -271,9 +279,11 @@ class BibTrackGui(QMainWindow):
         self.recentMenu.addActions(actions)
 
     def _populateSourcesMenu(self):
-        pass
+        selectedSources = self.bibEditor.sourcesTable.selectedItems()
+        self.removeSourcesAct.setDisabled(not len(selectedSources) > 0)
 
     def newBiblioTrack(self):
+        self.settings = loadSettings('settings')
         fullPaths = [os.path.join(self.bibTracksPath, entry) for entry in os.listdir(self.bibTracksPath)]
         bibTracks = [os.path.basename(directory) for directory in fullPaths if os.path.isdir(directory)]
         dialog = NewBibTrackWindow(bibTracks=bibTracks)
@@ -296,10 +306,11 @@ class BibTrackGui(QMainWindow):
             self.addToRecent(newBibTrackPath)
             self.settings['CURRENT_BIB_TRACK'] = newBibTrackPath
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
-            saveSettings(self.settings, 'settings')
+        saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
     def openBiblioTrack(self):
+        self.settings = loadSettings('settings')
         if os.path.exists(self.bibTracksPath):
             path = QFileDialog.getExistingDirectory(self, "Select Directory", self.bibTracksPath)
         else:
@@ -319,10 +330,11 @@ class BibTrackGui(QMainWindow):
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
-            saveSettings(self.settings, 'settings')
+        saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
     def openRecentBibTrack(self, folderName):
+        self.settings = loadSettings('settings')
         filenames = [os.path.basename(path) for path in self.settings['OPENED_RECENTLY']]
         path = self.settings['OPENED_RECENTLY'][filenames.index(folderName)]
         if os.path.exists(path):
@@ -332,10 +344,11 @@ class BibTrackGui(QMainWindow):
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
-            saveSettings(self.settings, 'settings')
+        saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
     def addToRecent(self, path):
+        self.settings = loadSettings('settings')
         self.settings['OPENED_RECENTLY'].insert(0, path)
         openedRecently = []
         for i in range(len(self.settings['OPENED_RECENTLY'])):
@@ -351,6 +364,7 @@ class BibTrackGui(QMainWindow):
         self._populateFileMenu()
 
     def saveAsBibTrack(self):
+        self.settings = loadSettings('settings')
         if os.path.exists(self.bibTracksPath):
             path = QFileDialog.getExistingDirectory(self, "Select Directory", self.bibTracksPath)
         else:
@@ -360,7 +374,7 @@ class BibTrackGui(QMainWindow):
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
-            saveSettings(self.settings, 'settings')
+        saveSettings(self.settings, 'settings')
         self._populateFileMenu()
 
     def importBibtex(self):
@@ -591,15 +605,20 @@ class BibTrackGui(QMainWindow):
             self.bibEditor.tracker.addSource(tag, source)
             self.bibEditor.addRow(tag, source)
 
+    def deleteSelectedSource(self):
+        self.bibEditor.deleteSelectedRows()
+
     def toggleDarkMode(self):
+        self.settings = loadSettings('settings')
         self.settings['DARK_THEME'] = not self.settings['DARK_THEME']
-        saveSettings(self.settings, 'settings')
         themeText = 'Light Theme' if self.settings['DARK_THEME'] else 'Dark Theme'
         self.darkModeAct.setText(f'&{themeText}')
         self.darkModeAct.setStatusTip(f' Applying {themeText}')
+        saveSettings(self.settings, 'settings')
         self._setTheme()
 
     def _setTheme(self):
+        self.settings = loadSettings('settings')
         if self.settings['DARK_THEME']:
             qdarktheme.setup_theme('dark', additional_qss="QToolTip {color: black;}")
         else:
@@ -629,6 +648,7 @@ class BibTrackGui(QMainWindow):
         reply = QMessageBox.question(self, 'Exit', "Are you sure to quit?", buttons, QMessageBox.No)
         if reply == QMessageBox.Yes:
             time.sleep(0.5)
+            self.settings = loadSettings('settings')
             self.settings['MAXIMIZED'] = 1 if self.isMaximized() else 0
             saveSettings(self.settings, 'settings')
             for window in QApplication.topLevelWidgets():
