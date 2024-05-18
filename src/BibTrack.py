@@ -12,7 +12,7 @@ from PyQt5.QtGui import *
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
-from src.common.widgets.widgets import AboutDialog
+from src.common.widgets.widgets import AboutDialog, NoBibTrackDisplay
 from src.references.general import NewBibTrackWindow, BibEditor, NewSourceWindow, BibTexExportDialog
 
 
@@ -32,13 +32,29 @@ class BibTrackGui(QMainWindow):
             qdarktheme.setup_theme('light')
         self.icons = {}
         self.bibEditor = None
+        self.noBibTrackDisplay = NoBibTrackDisplay()
+        self.noBibTrackDisplay.createNew.connect(self.newBiblioTrack)
+        self.noBibTrackDisplay.openExisting.connect(self.openBiblioTrack)
+        self.mainDisplay = QStackedWidget()
+        self.mainDisplay.addWidget(self.noBibTrackDisplay)
+        self.setCentralWidget(self.mainDisplay)
         if self.settings['CURRENT_BIB_TRACK'] and os.path.exists(self.settings['CURRENT_BIB_TRACK']):
             self.bibEditor = BibEditor(self.currentDir, self.settings['CURRENT_BIB_TRACK'])
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
-            self.setCentralWidget(self.bibEditor)
-            self.bibEditor.tracker.saveState()
+            # self.bibEditor.tracker.saveState()
+            self.mainDisplay.addWidget(self.bibEditor)
+            self.mainDisplay.setCurrentIndex(1)
         elif self.settings['CURRENT_BIB_TRACK']:
             self.settings['CURRENT_BIB_TRACK'] = ''
+            self.mainDisplay.setCurrentIndex(1)
+        self.datetime = QDateTime.currentDateTime()
+        self.dateLabel = QLabel(self.datetime.toString('dd.MM.yyyy  hh:mm:ss'))
+        self.dateLabel.setStyleSheet('border: 0;')
+        self.statusBar().addPermanentWidget(self.dateLabel)
+        self.statusBar().showMessage('Ready')
+        self.statusDateTimer = QTimer()
+        self.statusDateTimer.timeout.connect(self.updateStatus)
+        self.statusDateTimer.start(1000)
 
     def initializeUI(self):
         self._checkEnvironment()
@@ -646,6 +662,11 @@ class BibTrackGui(QMainWindow):
     def openAbout():
         dialog = AboutDialog()
         dialog.exec_()
+
+    def updateStatus(self):
+        self.datetime = QDateTime.currentDateTime()
+        formattedDate = self.datetime.toString('dd.MM.yyyy  hh:mm:ss')
+        self.dateLabel.setText(formattedDate)
 
     def closeEvent(self, event):
         buttons = QMessageBox.Yes | QMessageBox.No

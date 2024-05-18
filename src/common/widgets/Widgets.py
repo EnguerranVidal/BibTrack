@@ -268,3 +268,23 @@ class MessageBox(QMessageBox):
         gridLayout.removeWidget(buttonBox)
         gridLayout.addWidget(label, 0, 0)
         gridLayout.addWidget(buttonBox, 1, 0, alignment=Qt.AlignCenter)
+
+
+class NoBibTrackDisplay(QWidget):
+    createNew = pyqtSignal()
+    openExisting = pyqtSignal()
+
+    def __init__(self):
+        super().__init__()
+        # ACTION BUTTONS
+        self.createButton = QPushButton('Create a new BibTrack')
+        self.createButton.setFixedSize(200, 25)
+        self.createButton.clicked.connect(self.createNew.emit)
+        self.openButton = QPushButton('Open an existing BibTrack')
+        self.openButton.setFixedSize(200, 25)
+        self.openButton.clicked.connect(self.openExisting.emit)
+        # MAIN LAYOUT
+        mainLayout = QVBoxLayout(self)
+        mainLayout.addWidget(self.createButton, alignment=Qt.AlignCenter)
+        mainLayout.addWidget(self.openButton, alignment=Qt.AlignCenter)
+        self.setLayout(mainLayout)
