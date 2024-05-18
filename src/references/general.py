@@ -1,17 +1,21 @@
 import os
 import json
+import shutil
 import webbrowser
+from datetime import datetime
+
 import pandas as pd
 
 # ------------------- PyQt Modules -------------------- #
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from pybtex.database import BibliographyData, Entry
 
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
 from src.common.widgets.fields import GeneralFieldsEditor, SourceEditor
-from src.common.widgets.widgets import SquareIconButton, IconButton
+from src.common.widgets.widgets import SquareIconButton, IconButton, MessageBox
 # References
 from src.references.search import *
 from src.references.academics import *
@@ -29,7 +33,7 @@ class BibEditor(QWidget):
         self.currentDir, self.bibPath = path, bibPath
         self.tracker = BibTracker(self.bibPath)
         self.settings = loadSettings('settings')
-        self.editors = {}
+        self.editors = []
         # SOURCE TABLE
         self.sourceStackedWidget = QStackedWidget(self)
         self.sourcesTable = QTableWidget()
@@ -78,8 +82,8 @@ class BibEditor(QWidget):
         nameItem = QTableWidgetItem(sourceTag)
         typeItem = QTableWidgetItem(sourceDict['TYPE'])
         # Source Editor
-        self.editors[sourceTag] = SourceEditor(self.currentDir)
-        self.sourceStackedWidget.addWidget(self.editors[sourceTag])
+        self.editors.append(SourceEditor(self.currentDir, sourceTag))
+        self.sourceStackedWidget.addWidget(self.editors[-1])
         # Editor Button
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
@@ -121,29 +125,50 @@ class BibEditor(QWidget):
             webbrowser.open(self.tracker.sources[sourceTag]['URL'])
 
     def sourceEdit(self, sourceTag):
-        if not self.editors[sourceTag].generated:
-            self.editors[sourceTag].initialize(sourceTag, self.tracker.sources[sourceTag])
-            self.editors[sourceTag].returnClicked.connect(self.goBackToSources)
-            self.editors[sourceTag].typeFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
-            self.editors[sourceTag].generalFieldsEditor.fieldChanged.connect(lambda: self.sourceFieldChange(sourceTag))
-        self.sourceStackedWidget.setCurrentWidget(self.editors[sourceTag])
+        button = self.sender()
+        if button:
+            row = self.sourcesTable.indexAt(button.pos()).row()
+        if not self.editors[row].generated:
+            self.editors[row].initialize(self.tracker.sources[sourceTag])
+            self.editors[row].returnClicked.connect(self.goBackToSources)
+        self.editors[row].fieldChanged.connect(self.sourceFieldChange)
+        self.editors[row].tagChanged.connect(self.sourceTagChange)
+        self.sourceStackedWidget.setCurrentWidget(self.editors[row])
 
     def goBackToSources(self):
         self.sourceStackedWidget.setCurrentIndex(0)
 
-    def sourceFieldChange(self, sourceTag):
-        # SOURCE TYPE FIELDS CHANGE
+    def sourceTagChange(self):
+        editor: SourceEditor = self.sender()
+        sourceTag = editor.sourceTag
+        newSourceTag = editor.generalFieldsEditor.tagLineEdit.text()
+        # CHANGING SOURCE TAG NAME
+        self.tracker.renameSource(sourceTag, newSourceTag)
+        for row in range(self.sourcesTable.rowCount()):
+            item = self.sourcesTable.item(row, 0)
+            if item is not None and item.text() == sourceTag:
+                break
+        item = QTableWidgetItem(newSourceTag)
+        self.sourcesTable.setItem(row, 0, item)
+        editor.sourceTag = newSourceTag
+        # UPDATING EDIT BUTTON
+        themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
+        editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
+        editButton.clicked.connect(self.sourceEdit)
+        self.sourcesTable.setCellWidget(row, 2, editButton)
+
+    def sourceFieldChange(self):
+        editor: SourceEditor = self.sender()
+        sourceTag = editor.sourceTag
         self.tracker.sources[sourceTag]['FIELDS'] = self.editors[sourceTag].typeFieldsEditor.fields
         # GENERAL FIELDS CHANGE
-        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[
-            sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
+        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
         self.tracker.sources[sourceTag]['PDF'] = self.editors[sourceTag].generalFieldsEditor.pdfLineEdit.text()
         self.tracker.sources[sourceTag]['URL'] = self.editors[sourceTag].generalFieldsEditor.urlLineEdit.text()
-        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[
-            sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
+        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
         # RESET ACCESS BUTTON
         for row in range(self.sourcesTable.rowCount()):
-            item = self.sourcesTable.item(row, 0)  # Assuming you're searching in column 0
+            item = self.sourcesTable.item(row, 0)
             if item is not None and item.text() == sourceTag:
                 break
         if self.tracker.sources[sourceTag]['ACCESS'] == 'URL':
@@ -355,18 +380,32 @@ class BibTracker:
     def addSource(self, tag, source):
         newReference = {'TAG': tag, 'TYPE': source['TYPE']}
         self.references = pd.concat([self.references, pd.DataFrame([newReference])], ignore_index=True)
+        # ADDING CREATION AND MODIFICATION DATETIMES
+        currentDatetime = datetime.now()
+        source['CREATION_DATE'] = currentDatetime.strftime("%Y-%m-%d %H:%M:%S")
+        source['MODIFICATION_DATE'] = currentDatetime.strftime("%Y-%m-%d %H:%M:%S")
+        # ADDING NEW SOURCE TO SOURCES
         self.sources[tag] = source
+        self.sources[tag]['PREVIOUS_TAG'] = tag
 
     def removeSource(self, tag):
         del self.sources[tag]
         self.references = self.references.drop(self.references[self.references['TAG'] == tag].index)
 
+    def renameSource(self, oldTag, newTag):
+        selectedRows = self.references[self.references['TAG'] == oldTag]
+        selectedIndex = selectedRows.index
+        self.references.loc[selectedIndex, 'TAG'] = newTag
+        self.sources[newTag] = self.sources.pop(oldTag, None)
+
     def _loadSources(self):
         self.sources = {}
         for index, row in self.references.iterrows():
-            sourcePath = os.path.join(self.path, row['TAG'])
-            with open(os.path.join(sourcePath, "info.json"), 'r') as file:
-                self.sources[row['TAG']] = json.load(file)
+            if isinstance(row['TAG'], str):
+                sourcePath = os.path.join(self.path, row['TAG'])
+                with open(os.path.join(sourcePath, "info.json"), 'r') as file:
+                    self.sources[row['TAG']] = json.load(file)
+                self.sources[row['TAG']]['PREVIOUS_TAG'] = row['TAG']
 
     def saveState(self, path=None):
         self.path = self.path if path is None else path
@@ -374,11 +413,25 @@ class BibTracker:
             os.mkdir(self.path)
         for index, row in self.references.iterrows():
             sourcePath = os.path.join(self.path, row['TAG'])
+            # BIBTEX TAG HAS BEEN CHANGED
+            if row['TAG'] != self.sources[row['TAG']]['PREVIOUS_TAG']:
+                if os.path.exists(os.path.join(self.path, self.sources[row['TAG']]['PREVIOUS_TAG'])):
+                    os.rename(os.path.join(self.path, self.sources[row['TAG']]['PREVIOUS_TAG']), sourcePath)
+            # CREATING NON-EXISTING SOURCE DIRECTORY
             if not os.path.exists(sourcePath):
                 os.mkdir(sourcePath)
+            # MOVING PDF SOURCE IF NEEDED
+            pdfFilename = os.path.basename(self.sources[row['TAG']]['PDF'])
+            if os.path.exists(self.sources[row['TAG']]['PDF']) and not os.path.exists(os.path.join(sourcePath, pdfFilename)):
+                shutil.copy(self.sources[row['TAG']]['PDF'], os.path.join(sourcePath, pdfFilename))
+                self.sources[row['TAG']]['PDF'] = os.path.join(sourcePath, pdfFilename)
+            # SAVING FIELDS IN JSON
             with open(os.path.join(sourcePath, "info.json"), 'w') as file:
                 json.dump(self.sources[row['TAG']], file)
         self.references.to_csv(self.refPath, index=False)
+
+    def cleanSources(self):
+        pass
 
     def unsavedChanges(self):
         bibTracker = BibTracker(self.path)
@@ -387,4 +440,91 @@ class BibTracker:
     def __eq__(self, other):
         if not isinstance(other, BibTracker):
             return False
-        return self.sources == other.sources and self.references.equals(other.references)
+        if len(self.sources) != len(other.sources):
+            return False
+        for tag, source in self.sources.items():
+            otherSource = other.sources.get(tag)
+            if otherSource is None:
+                return False
+            sourceWithoutPreviousTag = {key: value for key, value in source.items() if key != 'PREVIOUS_TAG'}
+            otherSourceWithoutPreviousTag = {key: value for key, value in otherSource.items() if key != 'PREVIOUS_TAG'}
+            if sourceWithoutPreviousTag != otherSourceWithoutPreviousTag:
+                return False
+        return self.references.equals(other.references)
+
+    def generateBibTexFile(self, outputFilename):
+        bibData = BibliographyData()
+        for tag, entryData in self.sources.items():
+            entryType = entryData['TYPE'].lower()
+            fields = {key: value for key, value in entryData['FIELDS'].items() if value}
+            if fields:
+                entry = Entry(entryType, fields=fields)
+                bibData.add_entry(tag, entry)
+        with open(outputFilename, 'w') as bibFile:
+            bibFile.write(bibData.to_string('bibtex'))
+
+
+class BibTexExportDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.referenceFilePath = None
+        self.settings = loadSettings('settings')
+        themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
+        self.setWindowTitle("File Save Dialog")
+        self.setModal(True)
+        # FILE FIELDS
+        self.directoryLabel = QLabel(f'Directory :')
+        self.directoryEdit = QLineEdit()
+        self.directoryButton = SquareIconButton(f'src/icons/{themeFolder}/icons8-file-explorer-96.png', self)
+        self.directoryButton.clicked.connect(self.changeDirectory)
+        self.filenameLabel = QLabel(f'Filename :')
+        self.filenameEdit = QLineEdit()
+        self.filenameEdit.setText('references')
+        self.fileExtensionComboBox = QComboBox()
+        self.fileExtensionComboBox.addItems(['.bib', '.bibx', '.yaml', '.json', '.enl', '.refer'])
+        # BUTTONS
+        self.exportButton = QPushButton('Export')
+        self.cancelButton = QPushButton('Cancel')
+        self.exportButton.clicked.connect(self.checkFilename)
+        self.cancelButton.clicked.connect(self.reject)
+        # LAYOUT
+        directoryLayout = QHBoxLayout()
+        directoryLayout.addWidget(self.directoryLabel)
+        directoryLayout.addWidget(self.directoryEdit)
+        directoryLayout.addWidget(self.directoryButton)
+        fileNameLayout = QHBoxLayout()
+        fileNameLayout.addWidget(self.filenameLabel)
+        fileNameLayout.addWidget(self.filenameEdit)
+        fileNameLayout.addWidget(self.fileExtensionComboBox)
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addWidget(self.exportButton)
+        buttonLayout.addWidget(self.cancelButton)
+        mainLayout = QVBoxLayout()
+        mainLayout.addLayout(directoryLayout)
+        mainLayout.addLayout(fileNameLayout)
+        mainLayout.addLayout(buttonLayout)
+        self.setLayout(mainLayout)
+
+    def changeDirectory(self):
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory")
+        if directory:
+            self.directoryEdit.setText(directory)
+
+    def checkFilename(self):
+        exportFilename = self.filenameEdit.text() + self.fileExtensionComboBox.currentText()
+        self.referenceFilePath = os.path.join(self.directoryEdit.text(), exportFilename)
+        if os.path.exists(self.referenceFilePath) and os.path.isfile(self.referenceFilePath):
+            message = "This file already exists.\nDo you wish to overwrite it ?"
+            msg = MessageBox()
+            msg.setWindowTitle("Warning")
+            msg.setText(message)
+            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.Cancel)
+            msg.setStyleSheet("QLabel{min-width: 200px;}")
+            msg.exec_()
+            button = msg.clickedButton()
+            sb = msg.standardButton(button)
+            if sb == QMessageBox.Yes:
+                self.accept()
+            else:
+                return
+        self.accept()

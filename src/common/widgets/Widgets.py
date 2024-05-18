@@ -253,3 +253,18 @@ class EditionComboBox(QComboBox):
             self.setCurrentText(self.editions[abbreviations.index(inputEdition.lower())])
         else:
             self.setCurrentText('')
+
+
+class MessageBox(QMessageBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        gridLayout = self.layout()
+        iconLabel = self.findChild(QLabel, "qt_msgboxex_icon_label")
+        iconLabel.deleteLater()
+        label = self.findChild(QLabel, "qt_msgbox_label")
+        label.setAlignment(Qt.AlignCenter)
+        gridLayout.removeWidget(label)
+        buttonBox = self.findChild(QDialogButtonBox, "qt_msgbox_buttonbox")
+        gridLayout.removeWidget(buttonBox)
+        gridLayout.addWidget(label, 0, 0)
+        gridLayout.addWidget(buttonBox, 1, 0, alignment=Qt.AlignCenter)

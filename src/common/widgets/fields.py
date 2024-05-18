@@ -19,24 +19,29 @@ from src.references.others import *
 ######################## CLASSES ########################
 class SourceEditor(QWidget):
     returnClicked = pyqtSignal()
+    tagChanged = pyqtSignal()
+    typeChanged = pyqtSignal()
+    fieldChanged = pyqtSignal()
 
-    def __init__(self, path):
+    def __init__(self, path, sourceTag):
         super().__init__()
         self.currentDir = path
         self.generators = getGeneratorList()
         self.typeFieldsEditor = None
         self.goBackButton = None
         self.generalFieldsEditor = None
-        self.sourceTag = None
+        self.sourceTag = sourceTag
         self.generated = False
 
-    def initialize(self, sourceTag, fields):
+    def initialize(self, fields):
         self.goBackButton = QPushButton('Go Back to Source List', self)
         self.goBackButton.clicked.connect(self.returnClicked.emit)
-        self.sourceTag = sourceTag
         self.generated = True
-        self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, sourceTag, fields)
-        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, sourceTag, fields['FIELDS'])
+        self.generalFieldsEditor = GeneralFieldsEditor(self.currentDir, self.sourceTag, fields)
+        self.generalFieldsEditor.fieldChanged.connect(self.fieldChanged.emit)
+        self.generalFieldsEditor.tagChanged.connect(self.tagChanged.emit)
+        self.typeFieldsEditor = self.generators[fields['TYPE']](self.currentDir, self.sourceTag, fields['FIELDS'])
+        self.typeFieldsEditor.fieldChanged.connect(self.fieldChanged.emit)
         mainLayout = QGridLayout(self)
         mainLayout.addWidget(self.goBackButton, 0, 0, 1, 2)
         mainLayout.addWidget(self.generalFieldsEditor, 1, 0)
@@ -53,7 +58,6 @@ class GeneralFieldsEditor(QWidget):
         super().__init__()
         self.currentDir = path
         self.settings = loadSettings('settings')
-        self.sourceTag = sourceTag
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         self.sourceTypes = {'ARTICLE': 'Article', 'BOOK': 'Book', 'BOOKLET': 'Booklet', 'CONFERENCE': 'Conference',
                             'INBOOK': 'InBook', 'INCOLLECTION': 'InCollection', 'INPROCEEDINGS': 'InProceedings',
@@ -61,9 +65,10 @@ class GeneralFieldsEditor(QWidget):
                             'PHDTHESIS': 'PhdThesis', 'PROCEEDINGS': 'Proceedings', 'STANDARD': 'Standard',
                             'TECHREPORT': 'TechReport', 'UNPUBLISHED': 'Unpublished', 'URL': 'URL'}
         # GENERAL FIELDS & LABELS
-        self.tagLineEdit = QLineEdit(self.sourceTag)
-        self.tagLineEdit.setDisabled(True)
+        self.tagLineEdit = QLineEdit(sourceTag)
+        # self.tagLineEdit.setDisabled(True)
         self.tagLineEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.tagLineEdit.textChanged.connect(self.changeTag)
         self.sourceTypeComboBox = QComboBox()
         self.sourceTypeComboBox.addItems(list(self.sourceTypes.values()))
         self.sourceTypeComboBox.setCurrentText(self.sourceTypes[fields['TYPE']])
@@ -132,6 +137,9 @@ class GeneralFieldsEditor(QWidget):
         mainLayout.addWidget(descriptionLabel, 3, 0)
         mainLayout.addWidget(self.descriptionEdit, 4, 0, 1, 3)
         self.setLayout(mainLayout)
+
+    def changeTag(self):
+        self.tagChanged.emit()
 
     def _changeAccessType(self):
         self.accessStackWidget.setCurrentIndex(self.accessTypeComboBox.currentIndex())

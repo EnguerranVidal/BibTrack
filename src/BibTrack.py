@@ -2,7 +2,7 @@
 import os
 import time
 from functools import partial
-
+from pybtex.database import BibliographyData, Entry
 import qdarktheme
 
 # ------------------- PyQt Modules -------------------- #
@@ -13,7 +13,7 @@ from PyQt5.QtGui import *
 # --------------------- Sources ----------------------- #
 from src.common.utilities.fileSystem import loadSettings, saveSettings
 from src.common.widgets.widgets import AboutDialog
-from src.references.general import NewBibTrackWindow, BibEditor, NewSourceWindow
+from src.references.general import NewBibTrackWindow, BibEditor, NewSourceWindow, BibTexExportDialog
 
 
 ######################## CLASSES ########################
@@ -32,11 +32,13 @@ class BibTrackGui(QMainWindow):
             qdarktheme.setup_theme('light')
         self.icons = {}
         self.bibEditor = None
-        if self.settings['CURRENT_BIB_TRACK']:
+        if self.settings['CURRENT_BIB_TRACK'] and os.path.exists(self.settings['CURRENT_BIB_TRACK']):
             self.bibEditor = BibEditor(self.currentDir, self.settings['CURRENT_BIB_TRACK'])
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
             self.setCentralWidget(self.bibEditor)
             self.bibEditor.tracker.saveState()
+        elif self.settings['CURRENT_BIB_TRACK']:
+            self.settings['CURRENT_BIB_TRACK'] = ''
 
     def initializeUI(self):
         self._checkEnvironment()
@@ -188,7 +190,6 @@ class BibTrackGui(QMainWindow):
         self.aboutAct.triggered.connect(self.openAbout)
 
     def _createMenuBar(self):
-        print('hi')
         self.menubar = self.menuBar()
 
         ###  FILE MENU  ###
@@ -381,7 +382,10 @@ class BibTrackGui(QMainWindow):
         pass
 
     def exportToBibtex(self):
-        pass
+        exportDialog = BibTexExportDialog()
+        result = exportDialog.exec_()
+        if result == QDialog.Accepted:
+            self.bibEditor.tracker.generateBibTexFile(exportDialog.referenceFilePath)
 
     def addNewArticle(self):
         sourceTagList = list(self.bibEditor.tracker.sources.keys())
