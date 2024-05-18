@@ -285,6 +285,8 @@ class NoBibTrackDisplay(QWidget):
         self.openButton.clicked.connect(self.openExisting.emit)
         # MAIN LAYOUT
         mainLayout = QVBoxLayout(self)
+        mainLayout.addStretch()
         mainLayout.addWidget(self.createButton, alignment=Qt.AlignCenter)
         mainLayout.addWidget(self.openButton, alignment=Qt.AlignCenter)
+        mainLayout.addStretch()
         self.setLayout(mainLayout)

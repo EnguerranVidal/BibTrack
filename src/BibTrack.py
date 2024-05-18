@@ -38,6 +38,7 @@ class BibTrackGui(QMainWindow):
         self.mainDisplay = QStackedWidget()
         self.mainDisplay.addWidget(self.noBibTrackDisplay)
         self.setCentralWidget(self.mainDisplay)
+        # OPENING BIB EDITOR
         if self.settings['CURRENT_BIB_TRACK'] and os.path.exists(self.settings['CURRENT_BIB_TRACK']):
             self.bibEditor = BibEditor(self.currentDir, self.settings['CURRENT_BIB_TRACK'])
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
@@ -45,8 +46,15 @@ class BibTrackGui(QMainWindow):
             self.mainDisplay.addWidget(self.bibEditor)
             self.mainDisplay.setCurrentIndex(1)
         elif self.settings['CURRENT_BIB_TRACK']:
+            if self.settings['CURRENT_BIB_TRACK'] in self.settings['OPENED_RECENTLY']:
+                try:
+                    self.settings['OPENED_RECENTLY'].remove(self.settings['CURRENT_BIB_TRACK'])
+                except ValueError:
+                    print(f"BibTrack {self.settings['CURRENT_BIB_TRACK']} not found in the opened recently.")
             self.settings['CURRENT_BIB_TRACK'] = ''
-            self.mainDisplay.setCurrentIndex(1)
+            self.mainDisplay.setCurrentIndex(0)
+        saveSettings(self.settings, 'settings')
+        # STATUS BAR CREATION & DATETIME LABEL
         self.datetime = QDateTime.currentDateTime()
         self.dateLabel = QLabel(self.datetime.toString('dd.MM.yyyy  hh:mm:ss'))
         self.dateLabel.setStyleSheet('border: 0;')
@@ -296,8 +304,47 @@ class BibTrackGui(QMainWindow):
         self.recentMenu.addActions(actions)
 
     def _populateSourcesMenu(self):
-        selectedSources = self.bibEditor.sourcesTable.selectedItems()
-        self.removeSourcesAct.setDisabled(not len(selectedSources) > 0)
+        if self.bibEditor is not None:
+            selectedSources = self.bibEditor.sourcesTable.selectedItems()
+            self.removeSourcesAct.setDisabled(not len(selectedSources) > 0)
+            # ADDING SOURCES ACTIONS ENABLING
+            self.newArticleAct.setDisabled(False)
+            self.newBookAct.setDisabled(False)
+            self.newBookletAct.setDisabled(False)
+            self.newConferenceAct.setDisabled(False)
+            self.newInBookAct.setDisabled(False)
+            self.newInCollectionAct.setDisabled(False)
+            self.newInProceedingsAct.setDisabled(False)
+            self.newManualAct.setDisabled(False)
+            self.newMasterThesisAct.setDisabled(False)
+            self.newMiscAct.setDisabled(False)
+            self.newOnlineAct.setDisabled(False)
+            self.newPhdThesisAct.setDisabled(False)
+            self.newProceedingsAct.setDisabled(False)
+            self.newStandardAct.setDisabled(False)
+            self.newTechReportAct.setDisabled(False)
+            self.newUnpublishedAct.setDisabled(False)
+            self.newUrlAct.setDisabled(False)
+        else:
+            self.removeSourcesAct.setDisabled(True)
+            # ADDING SOURCES ACTIONS DISABLING
+            self.newArticleAct.setDisabled(True)
+            self.newBookAct.setDisabled(True)
+            self.newBookletAct.setDisabled(True)
+            self.newConferenceAct.setDisabled(True)
+            self.newInBookAct.setDisabled(True)
+            self.newInCollectionAct.setDisabled(True)
+            self.newInProceedingsAct.setDisabled(True)
+            self.newManualAct.setDisabled(True)
+            self.newMasterThesisAct.setDisabled(True)
+            self.newMiscAct.setDisabled(True)
+            self.newOnlineAct.setDisabled(True)
+            self.newPhdThesisAct.setDisabled(True)
+            self.newProceedingsAct.setDisabled(True)
+            self.newStandardAct.setDisabled(True)
+            self.newTechReportAct.setDisabled(True)
+            self.newUnpublishedAct.setDisabled(True)
+            self.newUrlAct.setDisabled(True)
 
     def newBiblioTrack(self):
         self.settings = loadSettings('settings')
@@ -318,7 +365,8 @@ class BibTrackGui(QMainWindow):
                     return
             newBibTrackPath = os.path.join(self.bibTracksPath, name)
             self.bibEditor = BibEditor(self.currentDir, newBibTrackPath)
-            self.setCentralWidget(self.bibEditor)
+            self.mainDisplay.addWidget(self.bibEditor)
+            self.mainDisplay.setCurrentIndex(1)
             self.bibEditor.tracker.saveState()
             self.addToRecent(newBibTrackPath)
             self.settings['CURRENT_BIB_TRACK'] = newBibTrackPath
@@ -343,7 +391,8 @@ class BibTrackGui(QMainWindow):
                     return
             self.bibEditor = BibEditor(self.currentDir, path)
             self.bibEditor.tracker.saveState()
-            self.setCentralWidget(self.bibEditor)
+            self.mainDisplay.addWidget(self.bibEditor)
+            self.mainDisplay.setCurrentIndex(1)
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
@@ -357,7 +406,8 @@ class BibTrackGui(QMainWindow):
         if os.path.exists(path):
             self.bibEditor = BibEditor(self.currentDir, path)
             self.bibEditor.tracker.saveState()
-            self.setCentralWidget(self.bibEditor)
+            self.mainDisplay.addWidget(self.bibEditor)
+            self.mainDisplay.setCurrentIndex(1)
             self.addToRecent(path)
             self.settings['CURRENT_BIB_TRACK'] = path
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
