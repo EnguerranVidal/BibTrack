@@ -112,6 +112,11 @@ class BibTrackGui(QMainWindow):
         self.saveAsBiblioAct = QAction('&Save As', self)
         self.saveAsBiblioAct.setStatusTip('Save Bibliography As...')
         self.saveAsBiblioAct.triggered.connect(self.saveAsBibTrack)
+        # Close Bibliography
+        self.closeBiblioAct = QAction('&Close', self)
+        self.closeBiblioAct.setStatusTip('Close Bibliography')
+        self.closeBiblioAct.setIcon(self.icons['CLOSE_WINDOW'])
+        self.closeBiblioAct.triggered.connect(self.closeBibTrack)
         # Import BibTeX
         self.importBibtexAct = QAction('&Import BibTeX', self)
         self.importBibtexAct.setStatusTip('Import BibTeX')
@@ -124,7 +129,6 @@ class BibTrackGui(QMainWindow):
         # Exit
         self.exitAct = QAction(QIcon('exit.png'), '&Exit', self)
         self.exitAct.setShortcut('Ctrl+Q')
-        self.exitAct.setIcon(self.icons['CLOSE_WINDOW'])
         self.exitAct.setStatusTip('Exit application')
         self.exitAct.triggered.connect(self.close)
         ########### HELP ###########
@@ -226,6 +230,7 @@ class BibTrackGui(QMainWindow):
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.saveBiblioAct)
         self.fileMenu.addAction(self.saveAsBiblioAct)
+        self.fileMenu.addAction(self.closeBiblioAct)
         self.fileMenu.addSeparator()
         self.fileMenu.addAction(self.importBibtexAct)
         self.fileMenu.addAction(self.exportBibtexAct)
@@ -282,14 +287,17 @@ class BibTrackGui(QMainWindow):
         if self.bibEditor is not None and self.bibEditor.tracker.unsavedChanges():
             self.saveBiblioAct.setDisabled(False)
             self.saveAsBiblioAct.setDisabled(False)
+            self.closeBiblioAct.setDisabled(False)
             self.exportBibtexAct.setDisabled(False)
         elif self.bibEditor is not None:
             self.saveBiblioAct.setDisabled(True)
             self.saveAsBiblioAct.setDisabled(False)
+            self.closeBiblioAct.setDisabled(False)
             self.exportBibtexAct.setDisabled(False)
         else:
             self.saveBiblioAct.setDisabled(True)
             self.saveAsBiblioAct.setDisabled(True)
+            self.closeBiblioAct.setDisabled(True)
             self.exportBibtexAct.setDisabled(True)
 
     def _populateRecentMenu(self):
@@ -404,6 +412,14 @@ class BibTrackGui(QMainWindow):
         filenames = [os.path.basename(path) for path in self.settings['OPENED_RECENTLY']]
         path = self.settings['OPENED_RECENTLY'][filenames.index(folderName)]
         if os.path.exists(path):
+            if self.bibEditor is not None and self.bibEditor.tracker.unsavedChanges():
+                reply = QMessageBox.question(self, 'Unsaved Changes',
+                                             'There are unsaved changes. Do you want to save before opening?',
+                                             QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+                if reply == QMessageBox.Save:
+                    self.bibEditor.tracker.saveState()
+                elif reply == QMessageBox.Cancel:
+                    return
             self.bibEditor = BibEditor(self.currentDir, path)
             self.bibEditor.tracker.saveState()
             self.mainDisplay.addWidget(self.bibEditor)
@@ -416,12 +432,9 @@ class BibTrackGui(QMainWindow):
 
     def addToRecent(self, path):
         self.settings = loadSettings('settings')
+        if path in self.settings['OPENED_RECENTLY']:
+            self.settings['OPENED_RECENTLY'].pop(self.settings['OPENED_RECENTLY'].index(path))
         self.settings['OPENED_RECENTLY'].insert(0, path)
-        openedRecently = []
-        for i in range(len(self.settings['OPENED_RECENTLY'])):
-            if self.settings['OPENED_RECENTLY'][i] not in openedRecently:
-                openedRecently.append(self.settings['OPENED_RECENTLY'][i])
-        self.settings['OPENED_RECENTLY'] = openedRecently
         if len(self.settings['OPENED_RECENTLY']) == 5:
             self.settings['OPENED_RECENTLY'].pop()
         saveSettings(self.settings, 'settings')
@@ -443,6 +456,13 @@ class BibTrackGui(QMainWindow):
             self.setWindowTitle(f"BibTrack ({os.path.basename(self.settings['CURRENT_BIB_TRACK'])})")
         saveSettings(self.settings, 'settings')
         self._populateFileMenu()
+
+    def closeBibTrack(self):
+        self.settings = loadSettings('settings')
+        self.mainDisplay.removeWidget(self.bibEditor)
+        self.bibEditor = None
+        self.settings['CURRENT_BIB_TRACK'] = ''
+        saveSettings(self.settings, 'settings')
 
     def importBibtex(self):
         pass
@@ -719,15 +739,39 @@ class BibTrackGui(QMainWindow):
         self.dateLabel.setText(formattedDate)
 
     def closeEvent(self, event):
-        buttons = QMessageBox.Yes | QMessageBox.No
-        reply = QMessageBox.question(self, 'Exit', "Are you sure to quit?", buttons, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            time.sleep(0.5)
-            self.settings = loadSettings('settings')
-            self.settings['MAXIMIZED'] = 1 if self.isMaximized() else 0
-            saveSettings(self.settings, 'settings')
-            for window in QApplication.topLevelWidgets():
-                window.close()
-            event.accept()
+        if self.bibEditor is not None and self.bibEditor.tracker.unsavedChanges():
+            reply = QMessageBox.question(self, 'Unsaved Changes',
+                                         'There are unsaved changes. Do you want to save ?',
+                                         QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            if reply == QMessageBox.Save:
+                self.bibEditor.tracker.saveState()
+                time.sleep(0.5)
+                self.settings = loadSettings('settings')
+                self.settings['MAXIMIZED'] = 1 if self.isMaximized() else 0
+                saveSettings(self.settings, 'settings')
+                for window in QApplication.topLevelWidgets():
+                    window.close()
+                event.accept()
+            elif reply == QMessageBox.Cancel:
+                event.ignore()
+            else:
+                time.sleep(0.5)
+                self.settings = loadSettings('settings')
+                self.settings['MAXIMIZED'] = 1 if self.isMaximized() else 0
+                saveSettings(self.settings, 'settings')
+                for window in QApplication.topLevelWidgets():
+                    window.close()
+                event.accept()
         else:
-            event.ignore()
+            buttons = QMessageBox.Yes | QMessageBox.No
+            reply = QMessageBox.question(self, 'Exit', "Are you sure to quit?", buttons, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                time.sleep(0.5)
+                self.settings = loadSettings('settings')
+                self.settings['MAXIMIZED'] = 1 if self.isMaximized() else 0
+                saveSettings(self.settings, 'settings')
+                for window in QApplication.topLevelWidgets():
+                    window.close()
+                event.accept()
+            else:
+                event.ignore()

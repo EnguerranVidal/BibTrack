@@ -409,6 +409,7 @@ class BibTracker:
 
     def saveState(self, path=None):
         self.path = self.path if path is None else path
+        self.refPath = os.path.join(self.path, 'references.csv')
         if not os.path.exists(self.path):
             os.mkdir(self.path)
         for index, row in self.references.iterrows():
