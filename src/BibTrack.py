@@ -2,7 +2,6 @@
 import os
 import time
 from functools import partial
-from pybtex.database import BibliographyData, Entry
 import qdarktheme
 
 # ------------------- PyQt Modules -------------------- #
@@ -436,7 +435,7 @@ class BibTrackGui(QMainWindow):
             self.settings['OPENED_RECENTLY'].pop(self.settings['OPENED_RECENTLY'].index(path))
         self.settings['OPENED_RECENTLY'].insert(0, path)
         if len(self.settings['OPENED_RECENTLY']) == 5:
-            self.settings['OPENED_RECENTLY'].pop()
+            self.settings['OPENED_RECENTLY'] = self.settings['OPENED_RECENTLY'][:4]
         saveSettings(self.settings, 'settings')
 
     def saveBibTrack(self):
@@ -471,7 +470,7 @@ class BibTrackGui(QMainWindow):
         exportDialog = BibTexExportDialog()
         result = exportDialog.exec_()
         if result == QDialog.Accepted:
-            self.bibEditor.tracker.generateBibTexFile(exportDialog.referenceFilePath)
+            self.bibEditor.tracker.generateBibTexFile(exportDialog.refPath)
 
     def addNewArticle(self):
         sourceTagList = list(self.bibEditor.tracker.sources.keys())

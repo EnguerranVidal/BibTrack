@@ -78,13 +78,12 @@ class BibEditor(QWidget):
         self.sourcesTable.itemSelectionChanged.connect(self.change.emit)
 
     def addRow(self, sourceTag, sourceDict):
-        # Name & Type
+        # NAME & TYPE
         nameItem = QTableWidgetItem(sourceTag)
         typeItem = QTableWidgetItem(sourceDict['TYPE'])
-        # Source Editor
+        # SOURCE EDITOR & BUTTON
         self.editors.append(SourceEditor(self.currentDir, sourceTag))
         self.sourceStackedWidget.addWidget(self.editors[-1])
-        # Editor Button
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
         editButton.clicked.connect(lambda: self.sourceEdit(sourceTag))
@@ -97,12 +96,11 @@ class BibEditor(QWidget):
             accessButton.clicked.connect(self.sourceAccessOpen)
         else:
             accessButton = QWidget()
-        # Selecting Toggle
+        # SELECTION TOGGLE BUTTON & DESCRIPTION
         debugToggle = QPushButton()
         debugToggle.setCheckable(True)
         debugToggle.setChecked(sourceDict['SELECTED'])
         debugToggle.clicked.connect(self.changeSelectedState)
-        # DESCRIPTION ITEM
         descriptionItem = QTableWidgetItem(sourceDict['DESCRIPTION'])
         # Adding Items & Widgets to Table Row
         rowPosition = self.sourcesTable.rowCount()
@@ -126,8 +124,7 @@ class BibEditor(QWidget):
 
     def sourceEdit(self, sourceTag):
         button = self.sender()
-        if button:
-            row = self.sourcesTable.indexAt(button.pos()).row()
+        row = self.sourcesTable.indexAt(button.pos()).row()
         if not self.editors[row].generated:
             self.editors[row].initialize(self.tracker.sources[sourceTag])
             self.editors[row].returnClicked.connect(self.goBackToSources)
@@ -156,16 +153,20 @@ class BibEditor(QWidget):
         editButton = IconButton(f'src/icons/{themeFolder}/icons8-edit-96.png', size=20)
         editButton.clicked.connect(self.sourceEdit)
         self.sourcesTable.setCellWidget(row, 2, editButton)
+        # CHANGING MODIFICATION DATE
+        currentDatetime = datetime.now()
+        self.tracker.sources[sourceTag]['MODIFICATION_DATE'] = currentDatetime.strftime("%Y-%m-%d %H:%M:%S")
+        self.change.emit()
 
     def sourceFieldChange(self):
         editor: SourceEditor = self.sender()
         sourceTag = editor.sourceTag
-        self.tracker.sources[sourceTag]['FIELDS'] = self.editors[sourceTag].typeFieldsEditor.fields
+        self.tracker.sources[sourceTag]['FIELDS'] = editor.typeFieldsEditor.fields
         # GENERAL FIELDS CHANGE
-        self.tracker.sources[sourceTag]['ACCESS'] = self.editors[sourceTag].generalFieldsEditor.accessTypeComboBox.currentText()
-        self.tracker.sources[sourceTag]['PDF'] = self.editors[sourceTag].generalFieldsEditor.pdfLineEdit.text()
-        self.tracker.sources[sourceTag]['URL'] = self.editors[sourceTag].generalFieldsEditor.urlLineEdit.text()
-        self.tracker.sources[sourceTag]['DESCRIPTION'] = self.editors[sourceTag].generalFieldsEditor.descriptionEdit.toPlainText()
+        self.tracker.sources[sourceTag]['ACCESS'] = editor.generalFieldsEditor.accessTypeComboBox.currentText()
+        self.tracker.sources[sourceTag]['PDF'] = editor.generalFieldsEditor.pdfLineEdit.text()
+        self.tracker.sources[sourceTag]['URL'] = editor.generalFieldsEditor.urlLineEdit.text()
+        self.tracker.sources[sourceTag]['DESCRIPTION'] = editor.generalFieldsEditor.descriptionEdit.toPlainText()
         # RESET ACCESS BUTTON
         for row in range(self.sourcesTable.rowCount()):
             item = self.sourcesTable.item(row, 0)
@@ -183,12 +184,19 @@ class BibEditor(QWidget):
         # CHANGE DESCRIPTION ITEM
         item = QTableWidgetItem(self.tracker.sources[sourceTag]['DESCRIPTION'])
         self.sourcesTable.setItem(row, 4, item)
+        # CHANGING MODIFICATION DATE
+        currentDatetime = datetime.now()
+        self.tracker.sources[sourceTag]['MODIFICATION_DATE'] = currentDatetime.strftime("%Y-%m-%d %H:%M:%S")
+        self.change.emit()
 
     def changeSelectedState(self):
         senderWidget: QPushButton = self.sender()
         row = self.sourcesTable.indexAt(senderWidget.pos()).row()
         tags = list(self.tracker.sources.keys())
         self.tracker.sources[tags[row]]['SELECTED'] = senderWidget.isChecked()
+        # CHANGING MODIFICATION DATE
+        currentDatetime = datetime.now()
+        self.tracker.sources[tags[row]]['MODIFICATION_DATE'] = currentDatetime.strftime("%Y-%m-%d %H:%M:%S")
         self.change.emit()
 
     def toggleSearchMode(self):
@@ -468,7 +476,7 @@ class BibTracker:
 class BibTexExportDialog(QDialog):
     def __init__(self):
         super().__init__()
-        self.referenceFilePath = None
+        self.refPath = None
         self.settings = loadSettings('settings')
         themeFolder = 'dark-theme' if self.settings['DARK_THEME'] else 'light-theme'
         self.setWindowTitle("File Save Dialog")
@@ -513,8 +521,8 @@ class BibTexExportDialog(QDialog):
 
     def checkFilename(self):
         exportFilename = self.filenameEdit.text() + self.fileExtensionComboBox.currentText()
-        self.referenceFilePath = os.path.join(self.directoryEdit.text(), exportFilename)
-        if os.path.exists(self.referenceFilePath) and os.path.isfile(self.referenceFilePath):
+        self.refPath = os.path.join(self.directoryEdit.text(), exportFilename)
+        if os.path.exists(self.refPath) and os.path.isfile(self.refPath):
             message = "This file already exists.\nDo you wish to overwrite it ?"
             msg = MessageBox()
             msg.setWindowTitle("Warning")

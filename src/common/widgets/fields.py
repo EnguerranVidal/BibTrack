@@ -74,7 +74,7 @@ class GeneralFieldsEditor(QWidget):
         self.sourceTypeComboBox.setCurrentText(self.sourceTypes[fields['TYPE']])
         self.sourceTypeComboBox.setDisabled(True)   # TODO : Remove when type change works
         self.sourceTypeComboBox.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        tagLabel, typeLabel, accessLabel, descriptionLabel = QLabel("Tag:"), QLabel("Type:"), QLabel("Access:"), QLabel("Description:")
+        tagLabel, typeLabel, accessLabel, descriptionLabel = QLabel("TAG:"), QLabel("TYPE:"), QLabel("ACCESS:"), QLabel("DESCRIPTION:")
         tagLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         typeLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         accessLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -133,7 +133,7 @@ class GeneralFieldsEditor(QWidget):
         mainLayout.addWidget(self.sourceTypeComboBox, 1, 1)
         mainLayout.addWidget(accessLabel, 2, 0)
         mainLayout.addWidget(self.accessTypeComboBox, 2, 1)
-        mainLayout.addWidget(self.accessStackWidget, 2, 2)  # Access stack widget spans two columns
+        mainLayout.addWidget(self.accessStackWidget, 2, 2)
         mainLayout.addWidget(descriptionLabel, 3, 0)
         mainLayout.addWidget(self.descriptionEdit, 4, 0, 1, 3)
         self.setLayout(mainLayout)
